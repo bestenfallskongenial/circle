@@ -21,8 +21,10 @@ This will provide the following files:
 
 	bootcode.bin		boot loader (not used on Raspberry Pi 4)
 	start.elf		firmware executable for  Raspberry Pi 1-3
+	start_x.elf		firmware executable for  Raspberry Pi 1-3 with dedicated vc4 firmware blobs 
 	start4.elf		firmware executable for  Raspberry Pi 4
 	fixup.dat		relocation information for start.elf
+	fixup_x.dat		relocation information for start.elf with dedicated vc4 firmware blobs 
 	fixup4.dat		relocation information for start4.elf
 	bcm2711-rpi-4-b.dtb	device tree binary needed for Raspberry Pi 4
 	bcm2711-rpi-400.dtb	device tree binary needed for Raspberry Pi 400
