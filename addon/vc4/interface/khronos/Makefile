@@ -15,6 +15,7 @@ EGL_OBJS = egl/egl_client.o egl/egl_client_config.o egl/egl_client_context.o \
 EXT_OBJS = ext/egl_brcm_driver_monitor_client.o ext/egl_brcm_flush_client.o \
 	   ext/egl_brcm_global_image_client.o ext/egl_brcm_perf_monitor_client.o \
 	   ext/egl_khr_lock_surface_client.o ext/egl_khr_sync_client.o \
+	   ext/egl_khr_image_client.o \
 	   ext/ext_gl_debug_marker.o ext/gl_oes_draw_texture_client.o \
 	   ext/gl_oes_egl_image_client.o ext/gl_oes_framebuffer_object.o \
 	   ext/gl_oes_map_buffer.o ext/gl_oes_matrix_palette_client.o \
