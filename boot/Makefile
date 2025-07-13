@@ -17,8 +17,12 @@ FIRMWARE ?= a585b376a2e7e657287543d196ae1f8881ede559
 BASEURL = https://github.com/raspberrypi/firmware/blob/$(FIRMWARE)/boot
 
 FILES = LICENCE.broadcom COPYING.linux \
-	bootcode.bin start.elf fixup.dat start4.elf fixup4.dat \
-	start_cd.elf fixup_cd.dat start4cd.elf fixup4cd.dat \
+	bootcode.bin \
+	start.elf fixup.dat \
+	start_x.elf fixup_x.dat \
+	start4.elf fixup4.dat \
+	start_cd.elf fixup_cd.dat \
+	start4cd.elf fixup4cd.dat \
 	bcm2710-rpi-zero-2-w.dtb bcm2711-rpi-4-b.dtb bcm2711-rpi-400.dtb bcm2711-rpi-cm4.dtb
 
 FILES32 = armstub7-rpi4.bin kernel.img kernel7.img kernel7l.img
