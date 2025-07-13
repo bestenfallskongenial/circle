@@ -1,0 +1,8 @@
+Oka, i tried to create a wire protocol h264 decoder for my oculus  mendax module,
+but its really a bare bone single format decoder for
+
+- raw 264 files
+- fixed resolution ( 640 to 480 )
+- baseline format and level 3.1
+
+it also attempt to create egl picture / gl es 2.0 zero copy textures in an alternating output buffer
