@@ -1,0 +1,122 @@
+# VideoCore Integration Changelog and Next Steps
+
+## Purpose and Rationale
+
+The goal of this implementation is to enable hardware-accelerated H.264 video decoding on the Raspberry Pi using the VideoCore GPU. This requires:
+
+1. **Zero-copy DMA memory sharing** between the ARM CPU and VideoCore GPU to avoid performance bottlenecks from memory transfers
+2. **VideoCore Shared Memory (VC_SM)** interface to register DMA buffers with the VideoCore
+3. **H.264 Decoder interface** to utilize the hardware decoder in the VideoCore
+4. **Proper object-oriented design** to encapsulate this functionality in reusable components
+
+The approach uses C++ classes rather than the original C implementation to improve maintainability, enable RAII for resource management, and better align with the object-oriented design of the Circle OS.
+
+## Changelog by File
+
+### kernel.h
+1. Added buffer definitions for zero-copy DMA memory:
+```cpp
+char** m_bufferVideo;
+char** m_bufferFrameBuffer;
+```
+   
+2. Added buffer size constants to clearly define memory requirements:
+```cpp
+#define VID_SIZE (1024*1024*16) // 16MB for video (.264) files
+#define FRAME_SIZE (1024*1024)  // 1MB for frame buffers
+```
+
+3. Added VideoCore components to manage GPU interactions:
+```cpp
+CVCSharedMemory m_SharedMemory;
+u32 m_videoBufferHandles[VID_SD + VID_USB];  // Handles for video buffers
+u32 m_frameBufferHandles[2];  // Handles for frame buffers
+```
+   *Rationale: These handles track the registered buffers in the VideoCore, required for later reference and cleanup*
+
+4. Added include for VideoCore class:
+```cpp
+#include <vc4/h264/vc_sm_class.h>
+```
+
+### kernel.cpp
+1. Updated constructor to initialize buffer pointers safely:
+```cpp
+CKernel::CKernel(void)
+    : /* other initializations */,
+      m_bufferVideo(nullptr),
+      m_bufferFrameBuffer(nullptr)
+```
+
+2. Added VideoCore initialization to Initialize method:
+```cpp
+if (bOK) { bOK = m_SharedMemory.Initialize(); }
+```
+   *Rationale: Must initialize VideoCore shared memory before registering buffers*
+
+3. Added DMA buffer allocation for video and frame buffers:
+```cpp
+m_bufferVideo = memory_init_dma_buffer(VID_SD + VID_USB, VID_SIZE);
+m_bufferFrameBuffer = memory_init_dma_buffer(2, FRAME_SIZE);
+```
+   *Rationale: Allocate contiguous physical memory required for DMA operations with the VideoCore*
+
+### Makefile
+1. Added VideoCore library to project Makefile:
+```
+$(CIRCLEHOME)/addon/vc4/h264/libvc_h264.a \
+```
+   *Rationale: Links our custom VideoCore interface library with the main project*
+
+### New Files Created
+1. **vc_sm_class.h/cpp**: C++ class encapsulation of the VideoCore Shared Memory interface
+   *Rationale: Provides proper resource management and cleaner interface than the C version*
+
+2. **vc_h264_decoder_class.h/cpp**: C++ class for the H.264 hardware decoder
+   *Rationale: Encapsulates decoder state and provides clean interface for video decoding*
+
+## Next Steps
+
+1. **Register Buffers with VideoCore**:
+Register the allocated DMA buffers with the VideoCore GPU to enable zero-copy access:
+```cpp
+// Register video buffers
+for (size_t i = 0; i < (VID_SD + VID_USB); i++)
+{
+    if (!m_SharedMemory.ImportMemory(m_bufferVideo[i], VID_SIZE, &m_videoBufferHandles[i]))
+    {
+        return FALSE;
+    }
+}
+```
+   *Rationale: Makes the ARM-allocated memory visible to the VideoCore GPU for direct access*
+
+2. **Add Cleanup for VideoCore Resources**:
+Properly release registered buffers to prevent memory leaks:
+```cpp
+// Free VC shared memory handles
+for (size_t i = 0; i < (VID_SD + VID_USB); i++)
+{
+    m_SharedMemory.FreeMemory(m_videoBufferHandles[i]);
+}
+```
+   *Rationale: Clean resource management requires explicit deregistration of memory*
+
+3. **Initialize H264 Decoder**:
+Set up the hardware decoder and configure it to use our frame buffers:
+```cpp
+// Configure output buffers
+if (!m_H264Decoder.SetOutputBuffers(m_bufferFrameBuffer[0], m_bufferFrameBuffer[1]))
+{
+    return FALSE;
+}
+```
+   *Rationale: The decoder needs to know where to write decoded frames; using alternating buffers allows continuous decoding*
+
+4. **Create H264 Parser Class**:
+Needed to parse H.264 stream into individual frames for decoding
+   *Rationale: The hardware decoder requires properly formatted individual frames*
+
+5. **File Loading Integration**:
+Connect file system code with the decoder pipeline
+   *Rationale: Complete the video playback pipeline from file to display*
