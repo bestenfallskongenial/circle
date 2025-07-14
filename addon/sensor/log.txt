@@ -1,0 +1,9 @@
+  CPP   hcsr04.o
+  CPP   mpu6050.o
+  CPP   bmp180.o
+  CPP   mcp300x.o
+  CPP   ky040.o
+  CPP   buttons.o
+  AR    libsensor.a
+
+  i added buttons.h and buttons.cpp and of corse buttons.o to the make file
