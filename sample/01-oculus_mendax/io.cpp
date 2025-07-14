@@ -1,6 +1,6 @@
 #include "kernel.h"
 #include "global.h"
-/*
+/*  do i should call you each time i change the menu ??
 void            CKernel::io_init_pickup_buffer      ()
 {
                 menu_pickup_flag[0]  = m_MCP300X.DoSingleEndedConversionRaw(4);
