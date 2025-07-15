@@ -14,21 +14,6 @@ void            CKernel::LED_circle_color        ()                    // simple
 
                 counter++;
 }
-/*
-void            CKernel::LED_circle_while_load ()                    // simple display_debug / feedback function
-{
-                static int counter = 0;
-
-                m_NeoPixels.SetLED (SD_LINE1, 2, (waveTable[0][1*counter%255]>>4), 0, 0 );
-                m_NeoPixels.SetLED (SD_LINE1, 1, (waveTable[0][2*counter%255]>>4), 0, 0 );
-                m_NeoPixels.SetLED (SD_LINE1, 3, (waveTable[0][3*counter%255]>>4), 0, 0 );
-                m_NeoPixels.SetLED (SD_LINE1, 0, (waveTable[0][2*counter%255]>>4), 0, 0 );
-
-                m_NeoPixels.Update ();
-
-                counter++;
-}
-*/
 void            CKernel::LED_update              ()            // important, i use the order 0 to 12 ( 0-7 for leds / 8-11 for mode 1 / 12-15 for mode 2 / 16-19 for lfo)
 {                               // but: the leds are mapped as 0->3, 1->1, 2->2, 3->0
                 switch (g_menu_mode_new)

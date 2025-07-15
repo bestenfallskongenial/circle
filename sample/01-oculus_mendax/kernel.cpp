@@ -261,7 +261,7 @@ m_H264Decoder.MMALinitialize           (                                m_VCSMin
                     util_LFO();                 
 
                     if ( is_hold_for_4_sec_a && is_hold_for_4_sec_b ) m_resetFlag = true;
-
+// i like to do it as function !!!
                     // FPS limiting using previous swap time prediction
                     currentTime = m_Timer.GetClockTicks();
                     targetTime = start_time_fps_calculation + (1000000 / TARGET_FPS);

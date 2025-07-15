@@ -503,6 +503,7 @@ void            CKernel::util_save_modes_file       ()    // whats up here???
                     }
 }
 // Generate H.264 parser information string for debugging
+// will soon be done internally in the h264_parser class code
 void            CKernel::GenerateH264ParserInfo     (   int     video_index,
                                                         char*   buffer_video[],
                                                         size_t  buffer_size[],    

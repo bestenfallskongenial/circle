@@ -32,7 +32,12 @@ Some portions are:
 This source code is licensed under GPLv2. Please refer to the header of these
 source files for details.
 
+<<<<<<< HEAD
 changes by bestenfallskongenial
+=======
+
+okay
+>>>>>>> 8eea934aa8392a6b88065aa1b33eb3a5854a3429
 
 folder h264 decoder
 
@@ -49,8 +54,12 @@ folder h264 parser
 
 folder vc_sm
 
+<<<<<<< HEAD
     my attempt of a vc_sm driver for zero copy 
 
 circle\addon\vc4\interface\khronos\Makefile
 
 added ext/egl_khr_image_client.o \ to EXT_OBJS = to make "eglCreateImageKHR" possible
+=======
+    my attempt of a vc_sm driver for zero copy 
+>>>>>>> 8eea934aa8392a6b88065aa1b33eb3a5854a3429
