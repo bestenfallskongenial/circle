@@ -1,4 +1,8 @@
-// vc_h264_parser.cpp
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+//              vc_h264_parser.cpp 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
 //
 // FINAL VERSION DONT CHANGE
 // seems to work as intended
@@ -6,6 +10,9 @@
 #include "vc_h264_parser.h"
 #include <string.h>
 
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+//              CONSTRUCTOR / DECONSTRUCTOR
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 CH264Parser::CH264Parser(void)
 {
     // Nothing to initialize - we use external storage
@@ -15,7 +22,9 @@ CH264Parser::~CH264Parser(void)
 {
     // Nothing to clean up - we don't own any memory
 }
-
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+//              USER API
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 bool CH264Parser::ParseVideo(   int     video_index,
                                 char*   buffer_array[], 
                                 size_t  size_array[], 
@@ -210,8 +219,77 @@ bool CH264Parser::ParseVideo(   int     video_index,
     return true;
 }
 
+bool CH264Parser::CreateExtradata(const uint8_t* data,
+                                  size_t         size,
+                                  uint8_t*       out,
+                                  size_t*        out_length)
+{
+    if (!data || size < 8) return false;
 
+    static const uint8_t sc[4] = {0,0,0,1};
 
+    size_t pos = 0;
+    size_t sps_off = 0, pps_off = 0;
+    size_t sps_len = 0, pps_len = 0;
+
+    // 1) find SPS (NAL type 7)
+    while (true) {
+        size_t off = FindNextStartCode(data, pos, size);
+        if (off >= size) return false;
+
+        size_t sc_len = (data[off+2] == 1) ? 3 : 4;
+        uint8_t nal_type = data[off + sc_len] & 0x1F;
+
+        if (nal_type == 7) { // SPS
+            sps_off = off;
+            pos = off + sc_len;
+            break;
+        }
+        pos = off + sc_len;
+    }
+
+    // 2) find PPS (NAL type 8)
+    while (true) {
+        size_t off = FindNextStartCode(data, pos, size);
+        if (off >= size) return false;
+
+        size_t sc_len = (data[off+2] == 1) ? 3 : 4;
+        uint8_t nal_type = data[off + sc_len] & 0x1F;
+
+        if (nal_type == 8) { // PPS
+            pps_off = off;
+            pos = off + sc_len;
+            break;
+        }
+        pos = off + sc_len;
+    }
+
+    // 3) calculate SPS/PPS lengths (exclude their start codes)
+    size_t sc_sps = (data[sps_off+2] == 1) ? 3 : 4;
+    size_t sc_pps = (data[pps_off+2] == 1) ? 3 : 4;
+
+    sps_len = pps_off - (sps_off + sc_sps);
+
+    // find the next NAL to know where PPS ends
+    size_t next_after_pps = FindNextStartCode(data, pps_off + sc_pps, size);
+    if (next_after_pps > size) next_after_pps = size;
+
+    pps_len = next_after_pps - (pps_off + sc_pps);
+
+    // 4) build Annex-B extradata: [00 00 00 01][SPS][00 00 00 01][PPS]
+    size_t out_pos = 0;
+    memcpy(out + out_pos, sc, 4);                        out_pos += 4;
+    memcpy(out + out_pos, data + sps_off + sc_sps, sps_len); out_pos += sps_len;
+    memcpy(out + out_pos, sc, 4);                        out_pos += 4;
+    memcpy(out + out_pos, data + pps_off + sc_pps, pps_len); out_pos += pps_len;
+
+    *out_length = out_pos;
+    return true;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+//              CALLBACK / HELPERS / UTILITY / WRAPPER
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 size_t CH264Parser::FindNextStartCode(u8* data, size_t pos, size_t size) const
 {
     while (pos < size - 3) {
@@ -443,42 +521,7 @@ bool CH264Parser::ParseSPS(u8* sps_data, size_t sps_size, u16* width, u16* heigh
 }
 
 
-bool CH264Parser::CreateExtradata(const uint8_t* data,
-                                  size_t         size,
-                                  uint8_t*       out,
-                                  size_t*        out_length,
-                                  size_t*        out_idr_offset)
-{
-    // 1) Locate SPS
-    size_t off1 = FindNextStartCode(data, 0, size);
-    if (off1 >= size) return false;
-    size_t sc1 = (data[off1+2] == 1) ? 3 : 4;
 
-    // 2) Locate PPS
-    size_t off2 = FindNextStartCode(data, off1 + sc1, size);
-    if (off2 >= size) return false;
-    size_t sc2 = (data[off2+2] == 1) ? 3 : 4;
-
-    // 3) Locate IDR (next NAL after PPS)
-    size_t off3 = FindNextStartCode(data, off2 + sc2, size);
-    if (off3 > size) off3 = size;
-
-    // 4) Compute raw NAL sizes (exclude start codes)
-    size_t sps_len = off2 - (off1 + sc1);
-    size_t pps_len = off3 - (off2 + sc2);
-
-    // 5) Build Annex-B extradata: [00 00 00 01][SPS][00 00 00 01][PPS]
-    static const uint8_t sc[4] = {0,0,0,1};
-    size_t pos = 0;
-    memcpy(out + pos, sc, 4);                                              pos += 4;
-    memcpy(out + pos, data + off1 + sc1, sps_len);                         pos += sps_len;
-    memcpy(out + pos, sc, 4);                                              pos += 4;
-    memcpy(out + pos, data + off2 + sc2, pps_len);                         pos += pps_len;
-
-    *out_length     = pos;
-    *out_idr_offset = off3;
-    return true;
-}
 
 
 /*

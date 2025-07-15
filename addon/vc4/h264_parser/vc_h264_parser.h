@@ -32,32 +32,39 @@ public:
 
                                                                                         // Parse an H.264 video buffer using external storag
 
-    bool ParseVideo         (   int             video_index,                            // video_index: Index of video in the arrays
-                                char*           buffer_array[],                         // buffer_array: Array of pointers to H.264 video data
-                                size_t          size_array[],                           // size_array: Array of sizes of video data in bytes
-                                u16             vid_width[],                            // vid_width: Array to store parsed video width [video_index]
-                                u16             vid_height[],                           // vid_height: Array to store parsed video height [video_index]
-                                u8              vid_profile[],                          // vid_profile: Array to store parsed video profile [video_index]
-                                u8              vid_level[],                        // NEW! NEED TO BE ADAPTED IN THE PROJECT
-                                void*           frame_addresses[][MAX_FRAMES],          // frame_addresses: 2D array to store I-frame addresses [video_index][frame_index]
-                                size_t          length_of_frames[][MAX_FRAMES],         // length_of_frames: 2D array to store I-frame sizes [video_index][frame_index]
-                                int             number_of_frames[],                     // number_of_frames: Array to store frame count per video [video_index]
-                                bool            is_video_valid[]);                      // is_video_valid: Array to store basic validity check [video_index]
-                                                                                        // Returns true if parsing completed, false on error
+bool            ParseVideo                                  (   int             video_index,                            // video_index: Index of video in the arrays
+                                                                char*           buffer_array[],                         // buffer_array: Array of pointers to H.264 video data
+                                                                size_t          size_array[],                           // size_array: Array of sizes of video data in bytes
+                                                                u16             vid_width[],                            // vid_width: Array to store parsed video width [video_index]
+                                                                u16             vid_height[],                           // vid_height: Array to store parsed video height [video_index]
+                                                                u8              vid_profile[],                          // vid_profile: Array to store parsed video profile [video_index]
+                                                                u8              vid_level[],                        // NEW! NEED TO BE ADAPTED IN THE PROJECT
+                                                                void*           frame_addresses[][MAX_FRAMES],          // frame_addresses: 2D array to store I-frame addresses [video_index][frame_index]
+                                                                size_t          length_of_frames[][MAX_FRAMES],         // length_of_frames: 2D array to store I-frame sizes [video_index][frame_index]
+                                                                int             number_of_frames[],                     // number_of_frames: Array to store frame count per video [video_index]
+                                                                bool            is_video_valid[]);                      // is_video_valid: Array to store basic validity check [video_index]
+                                                                                                                        // Returns true if parsing completed, false on error
 
 // In vc_h264_parser.h, update the helper signature:
-    bool CreateExtradata(const uint8_t* data,
-                            size_t         size,
-                            uint8_t*       out,
-                            size_t*        out_length,
-                            size_t*        out_idr_offset);
-
+bool            CreateExtradata                             (   const uint8_t* data,
+                                                                size_t         size,
+                                                                uint8_t*       out,
+                                                                size_t*        out_length)
 
 private:
     // Helper methods
-    size_t FindNextStartCode(u8* data, size_t pos, size_t size) const;
-    bool ParseSPS(u8* sps_data, size_t sps_size, u16* width, u16* height, u8* profile, u8* level) const;
-    u32 ReadExpGolomb(u8* data, size_t* bit_offset) const;
+size_t          FindNextStartCode                           (   u8*             data, 
+                                                                size_t          pos, 
+                                                                size_t          size) const;
+bool            ParseSPS                                    (   u8*             sps_data, 
+                                                                size_t          sps_size, 
+                                                                u16*            width, 
+                                                                u16*            height, 
+                                                                u8*             profile, 
+                                                                u8*             level) const;
+
+u32             ReadExpGolomb                               (   u8*             data, 
+                                                                size_t*         bit_offset) const;
 
 public: // members
 };
