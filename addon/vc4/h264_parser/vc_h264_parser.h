@@ -38,7 +38,7 @@ bool            ParseVideo                                  (   int             
                                                                 u16             vid_width[],                            // vid_width: Array to store parsed video width [video_index]
                                                                 u16             vid_height[],                           // vid_height: Array to store parsed video height [video_index]
                                                                 u8              vid_profile[],                          // vid_profile: Array to store parsed video profile [video_index]
-                                                                u8              vid_level[],                        // NEW! NEED TO BE ADAPTED IN THE PROJECT
+                                                                u8              vid_level[],                            // NEW! NEED TO BE ADAPTED IN THE PROJECT
                                                                 void*           frame_addresses[][MAX_FRAMES],          // frame_addresses: 2D array to store I-frame addresses [video_index][frame_index]
                                                                 size_t          length_of_frames[][MAX_FRAMES],         // length_of_frames: 2D array to store I-frame sizes [video_index][frame_index]
                                                                 int             number_of_frames[],                     // number_of_frames: Array to store frame count per video [video_index]

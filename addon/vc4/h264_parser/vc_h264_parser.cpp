@@ -290,6 +290,88 @@ bool CH264Parser::CreateExtradata(const uint8_t* data,
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              CALLBACK / HELPERS / UTILITY / WRAPPER
 //----------------------------------------------------------------------------------------------------------------------------------------------------
+void            CH264Parser::ParserstoreLog              (   const char* label, u32 value1, u32 value2)
+{
+    // Always write the label
+    for (const char* p = label; *p; ++p)
+        m_DebugCharArray[m_CharIndex++] = *p;
+
+    // If both values are placeholders, stop here
+    if (value1 == STOREDEBUG_WHITESPACE && value2 == STOREDEBUG_WHITESPACE) {
+        m_DebugCharArray[m_CharIndex++] = '\n';
+        m_DebugCharArray[m_CharIndex]   = '\0';
+        return;
+    }
+
+    // If value is valid, write it
+    if (value1 != STOREDEBUG_WHITESPACE) {
+        m_DebugCharArray[m_CharIndex++] = ' ';
+        m_DebugCharArray[m_CharIndex++] = '0';
+        m_DebugCharArray[m_CharIndex++] = 'x';
+        for (int i = (sizeof(u32) * 2) - 1; i >= 0; --i) {
+            char hex = "0123456789ABCDEF"[(value1 >> (i * 4)) & 0xF];
+            m_DebugCharArray[m_CharIndex++] = hex;
+        }
+    }
+
+    // If second value is valid, write it
+    if (value2 != STOREDEBUG_WHITESPACE) {
+        m_DebugCharArray[m_CharIndex++] = ' ';
+        m_DebugCharArray[m_CharIndex++] = '0';
+        m_DebugCharArray[m_CharIndex++] = 'x';
+        for (int i = (sizeof(u32) * 2) - 1; i >= 0; --i) {
+            char hex = "0123456789ABCDEF"[(value2 >> (i * 4)) & 0xF];
+            m_DebugCharArray[m_CharIndex++] = hex;
+        }
+    }
+
+    // Terminate
+    m_DebugCharArray[m_CharIndex++] = '\n';
+    m_DebugCharArray[m_CharIndex]   = '\0';
+}
+
+void            CH264Parser::ParserstoreMsg              (   const void* tx_msg, u32 total_size, const char* label)
+{   
+    // insert leading newline
+    m_DebugCharArray[m_CharIndex] = '\n';
+    m_CharIndex++;
+    // copy label
+    for (const char* p = label; *p; ++p) 
+        {
+        m_DebugCharArray[m_CharIndex] = *p;
+        m_CharIndex++;
+        }
+    // next line please
+    m_DebugCharArray[m_CharIndex] = '\n';
+    m_CharIndex++;
+    // hex dump, 16 bytes per line
+    const unsigned char* b = (const unsigned char*)tx_msg;
+    for (u32 i = 0; i < total_size; ++i) {
+        if (i && (i % 16) == 0) 
+            {
+            m_DebugCharArray[m_CharIndex] = '\n';
+            m_CharIndex++;
+            }
+        unsigned char v = b[i];
+
+        char hi = "0123456789ABCDEF"[v >> 4];
+        m_DebugCharArray[m_CharIndex] = hi;
+        m_CharIndex++;
+
+        char lo = "0123456789ABCDEF"[v & 0xF];
+        m_DebugCharArray[m_CharIndex] = lo;
+        m_CharIndex++;
+
+        m_DebugCharArray[m_CharIndex] = ' ';
+        m_CharIndex++;
+    }
+    // newline + terminator
+    m_DebugCharArray[m_CharIndex] = '\n';
+    m_CharIndex++;
+    m_DebugCharArray[m_CharIndex] = '\n';
+    m_CharIndex++;    
+    m_DebugCharArray[m_CharIndex] = '\0';
+}
 size_t CH264Parser::FindNextStartCode(u8* data, size_t pos, size_t size) const
 {
     while (pos < size - 3) {
