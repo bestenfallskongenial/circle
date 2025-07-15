@@ -1,5 +1,6 @@
 okay, we will 
 1: carry over the log to string functionality from my h264 code 
 and than remove the parser log from the project code.
-2: we will include the parser for the bpm fictures as well.
+2: we will include the parser for the bpm pictures as well.
    cant imagine right now how to change the project but...
+3: we need finally figure out what nal units we need to sen to the vpu in the main render/decoder loop
