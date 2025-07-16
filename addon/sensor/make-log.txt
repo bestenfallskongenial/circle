@@ -1,0 +1,9 @@
+root@WIN-HS0BFGPCN4F:/home/bestenfalls/oculus_mendax/circle/addon/sensor# make
+  CPP   hcsr04.o
+  CPP   mpu6050.o
+  CPP   bmp180.o
+  CPP   mcp300x.o
+  CPP   ky040.o
+  CPP   buttons.o
+  AR    libsensor.a
+root@WIN-HS0BFGPCN4F:/home/bestenfalls/oculus_mendax/circle/addon/sensor#

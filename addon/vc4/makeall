@@ -16,11 +16,4 @@ cd ..
 cd sound
 $make $1 $2 || exit
 
-if [[ $makesample == true ]]
-then
-	cd sample
-	$make $1 $2 || exit
-	cd ..
-fi
-
 cd ..

@@ -1,0 +1,15 @@
+root@WIN-HS0BFGPCN4F:/home/bestenfalls/oculus_mendax/circle/addon/vc4# ./makeall
+  CPP   vchiqdevice.o
+  CC    vchiq_arm.o
+  CC    vchiq_2835_arm.o
+  CC    vchiq_core.o
+  CC    vchiq_kern_lib.o
+  CC    vchiq_connected.o
+  CC    vchiq_shim.o
+  CC    vchiq_util.o
+  AR    libvchiq.a
+  CPP   vchiqsoundbasedevice.o
+  CPP   vchiqsounddevice.o
+  CPP   vchiqsoundcontroller.o
+  AR    libvchiqsound.a
+root@WIN-HS0BFGPCN4F:/home/bestenfalls/oculus_mendax/circle/addon/vc4#
