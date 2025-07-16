@@ -19,10 +19,27 @@ CH264Parser::~CH264Parser(void)
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              USER API
 //----------------------------------------------------------------------------------------------------------------------------------------------------
+void    CH264Parser::ParseInitialize (  int     max_videos,  
+                                        int     max_frames,
+                                        u16     max_width,
+                                        u16     max_height,
+                                        u8      max_profile,
+                                        u8      max_level)
+{
+    m_max_videos  = max_videos;
+    m_max_frames  = max_frames;
+    m_max_width   = max_width;
+    m_max_height  = max_height;
+    m_max_profile = max_profile;
+    m_max_level   = max_level;
+}
 bool CH264Parser::ParseVideo(   int            video_index,
                                 const uint8_t* buffer,
                                 size_t         size)
 
+    ParserStoreLog("Video Index",                  
+                video_index 
+                m_video_height[video_index]);                                
     const uint8_t* data = buffer;
     // Skip potential non-standard leading byte
     if (size > 4 && data[0] != 0 && data[1] == 0 && data[2] == 0) 
@@ -80,17 +97,33 @@ bool CH264Parser::ParseVideo(   int            video_index,
                 }
             // Parse SPS -> width/height/profile/level
             if (ParseSPS(clean_sps, clean_idx,
-                         &m_video_width[video_index],
-                         &m_video_height[video_index],
-                         &m_vid_profile[video_index],
-                         &m_vid_level[video_index])) 
-                         {
+                        &m_video_width[video_index],
+                        &m_video_height[video_index],
+                        &m_vid_profile[video_index],
+                        &m_vid_level[video_index])) 
+                        {
                         found_sps = true;
-                        // log parsed SPS info
-                        ParserstoreLog("SPS width/height",
+                        
+                        if (m_video_width[video_index]  != m_max_width ||   // Check resolution
+                            m_video_height[video_index] != m_max_height) 
+                            {
+                            m_vid_is_valid[video_index] = false;
+                            return false;
+                            }
+                        if (m_vid_profile[video_index] != m_max_profile)    // Check profile
+                            {
+                            m_vid_is_valid[video_index] = false;
+                            return false;
+                            }
+                        if (m_vid_level[video_index] != m_max_level)        // Check level
+                            {
+                            m_vid_is_valid[video_index] = false;
+                            return false;
+                            }
+                        ParserStoreLog("SPS width/height",                  // log parsed SPS info
                                     m_video_width[video_index],
                                     m_video_height[video_index]);
-                        ParserstoreLog("SPS profile/level",
+                        ParserStoreLog("SPS profile/level",
                                     m_vid_profile[video_index],
                                     m_vid_level[video_index]);
                         }
@@ -129,7 +162,7 @@ bool CH264Parser::ParseVideo(   int            video_index,
         m_vid_is_valid[video_index]    = true;
 
         // log full extradata hex dump
-        ParserstoreMsg(m_extradata[video_index],
+        ParserStoreMsg(m_extradata[video_index],
                        m_extradata_len[video_index],
                        "EXTRADATA SPS+PPS");
         }
@@ -160,7 +193,7 @@ bool CH264Parser::ParseVideo(   int            video_index,
                 m_framelenght[video_index][frame_idx] = size - pos;
                 }
             // log IDR frame pointer + length
-            ParserstoreLog("IDR frame addr/len",
+            ParserStoreLog("IDR frame addr/len",
                            (u32)(uintptr_t)m_frame_address[video_index][frame_idx],
                            (u32)m_framelenght[video_index][frame_idx]);
             frame_idx++;
@@ -177,7 +210,7 @@ bool CH264Parser::ParseVideo(   int            video_index,
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              CALLBACK / HELPERS / UTILITY / WRAPPER
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-void            CH264Parser::ParserstoreLog              (   const char* label, u32 value1, u32 value2)
+void            CH264Parser::ParserStoreLog              (   const char* label, u32 value1, u32 value2)
 {
     // Always write the label
     for (const char* p = label; *p; ++p)
@@ -218,7 +251,7 @@ void            CH264Parser::ParserstoreLog              (   const char* label, 
     m_DebugCharArray[m_CharIndex++] = '\n';
     m_DebugCharArray[m_CharIndex]   = '\0';
 }
-void            CH264Parser::ParserstoreMsg              (   const void* tx_msg, u32 total_size, const char* label)
+void            CH264Parser::ParserStoreMsg              (   const void* tx_msg, u32 total_size, const char* label)
 {   
     // insert leading newline
     m_DebugCharArray[m_CharIndex] = '\n';
