@@ -116,14 +116,5 @@ void            CKernel::util_LFO                   ()
 void            CKernel::util_audio_energy          (float adcvalue)
 bool            CKernel::util_check_for_update      ()
 void            CKernel::util_save_modes_file       ()
-void            CKernel::GenerateH264ParserInfo     (   int     video_index,                                        // stores to string debug
-                                                        char*   buffer_video[],
-                                                        size_t  buffer_size[],    
-                                                        u16     video_width[],
-                                                        u16     video_height[],
-                                                        u8      video_profile[],
-                                                        void*   frame_addresses[][MAX_FRAMES],
-                                                        size_t  length_of_frames[][MAX_FRAMES],
-                                                        int     number_of_frames[],
-                                                        bool    is_video_valid[])
+void            CKernel::GenerateH264ParserInfo     (   int     video_index)
 void            CKernel::debug_parser               ()                                                              // unused!

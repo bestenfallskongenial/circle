@@ -1,5 +1,6 @@
 #include "kernel.h"
 #include "global.h"
+#include "wavetable.h"
 
 void            CKernel::LED_circle_color        ()                    // simple display_debug / feedback function
 {

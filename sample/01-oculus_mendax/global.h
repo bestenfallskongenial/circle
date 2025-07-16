@@ -75,16 +75,7 @@ extern          float                   GLtime;
 extern          float                   opaque;
 
 //  Define file names on the sd card and usb stick
-extern  const   char                    *VSH_NAMES_SD                           [VSH_SD];
-extern  const   char                    *FSH_NAMES_SD                           [FSH_SD];
-extern  const   char                    *TEX_NAMES_SD                           [TEX_SD];
-extern  const   char                    *VID_NAMES_SD                           [VID_SD];
-
-extern  const   char                    *VSH_NAMES_USB                          [VSH_USB];
-extern  const   char                    *FSH_NAMES_USB                          [FSH_USB];
-extern  const   char                    *TEX_NAMES_USB                          [TEX_USB];
-extern  const   char                    *VID_NAMES_USB                          [VID_USB];
-
+extern  const   char                    *VID__LOG_NAMES                          [VID_SD+VID_USB];
 
 extern          char                   *SCANED_FILES_VSH                         [40];
 extern          char                   *SCANED_FILES_FSH                         [40];
@@ -95,15 +86,6 @@ extern          unsigned                VSH_LOADED_BYTES                        
 extern          unsigned                FSH_LOADED_BYTES                        [FSH_SD + FSH_USB];
 extern          unsigned                TEX_LOADED_BYTES                        [TEX_SD + TEX_USB];
 extern          unsigned                VID_LOADED_BYTES                        [VID_SD + VID_USB]; 
-// H.264 Video Parser
-extern          u16                     VID_WIDTH                               [VID_SD + VID_USB];
-extern          u16                     VID_HEIGHT                              [VID_SD + VID_USB];
-extern          u8                      VID_PROFILE                             [VID_SD + VID_USB];
-extern          void*                   FRAME_ADDRESSES                         [VID_SD + VID_USB][MAX_FRAMES];
-extern          size_t                  FRAME_LENGTH                            [VID_SD + VID_USB][MAX_FRAMES];
-extern          int                     FRAME_COUNT                             [VID_SD + VID_USB];
-extern          bool                    VID_IS_VALID                            [VID_SD + VID_USB];
-
 // Define arrays for bitmap metadata
 extern          bool                    TEX_FILE_STATUS                         [TEX_SD + TEX_USB];                                
 extern          uint32_t                TEX_FILE_SIZE                           [TEX_SD + TEX_USB];           // File size 
@@ -117,8 +99,7 @@ extern          unsigned long           last_circle_buffer                      
 extern          unsigned long           next_circle_buffer                      [LFO_INSTANCES];
 extern          float                   LFO_float_output                        [LFO_INSTANCES];
 extern          int                     last_multiplier                         [LFO_INSTANCES];
-//  Define waveTable for my LFO ( static when used inside the LFO function )
-extern          unsigned long           waveTable                               [WAVEFORMS][WAVESAMPLES];
+
 extern          int                     adc_raw_value                           [ADC_CHANNELS];
 extern          int                     adc_int_value                           [ADC_CHANNELS];
 extern          float                   adc_float_value                         [ADC_CHANNELS];
@@ -145,6 +126,9 @@ extern          unsigned long           last_valid_bpm_buffer                   
 extern          unsigned long           intervalBuffer                          [2][3];
 extern          unsigned char           led_col_new                        [20][3];
 extern  const   unsigned char           rgb_tab                               [49][3]; 
+
+extern          unsigned long           waveTable                               [WAVEFORMS][WAVESAMPLES];
+
 
 extern          unsigned long elapsedMicroseconds[LFO_INSTANCES];
 extern          unsigned long cycleLength[LFO_INSTANCES];

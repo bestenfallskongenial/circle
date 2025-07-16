@@ -346,20 +346,8 @@ public:
 //  void			menu_mode_assign_audio		();	
 //  void			debug						();
 
- // bool			TestVDECServiceAvailability	();
+	void 			GenerateH264ParserInfo		(	int     video_index);
 
-	void 			GenerateH264ParserInfo		(	int     video_index,
-													char*   buffer_video[],
-													size_t  buffer_size[],    
-													u16     video_width[],
-													u16     video_height[],
-													u8      video_profile[],
-													void*   frame_addresses[][MAX_FRAMES],
-													size_t  length_of_frames[][MAX_FRAMES],
-													int     number_of_frames[],
-													bool    is_video_valid[]);
-
-	void 			debug_parser();
 
 private:
 	CActLED			    m_ActLED;

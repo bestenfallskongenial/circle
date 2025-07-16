@@ -19,7 +19,7 @@ CH264Parser::~CH264Parser(void)
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              USER API
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-void    CH264Parser::ParseInitialize (  int         max_videos,  
+bool    CH264Parser::ParseInitialize (  int         max_videos,  
                                         int         max_frames,
                                         u16         max_width,
                                         u16         max_height,
@@ -32,6 +32,8 @@ void    CH264Parser::ParseInitialize (  int         max_videos,
     m_max_height  = max_height;
     m_max_profile = max_profile;
     m_max_level   = max_level;
+
+    if ( max_videos != MAX_VIDEOS ) return false;
 }
 bool CH264Parser::ParseVideo(    int     video_index,
     char*   buffer_array[],
@@ -107,23 +109,18 @@ ParserStoreLog("Parser / Frame Log for Video", video_index);
 if (m_video_width[video_index]  != m_max_width ||
     m_video_height[video_index] != m_max_height) 
 {
-
     m_vid_is_valid[video_index] = false;
     return false;
 }
-
 // Check profile
 if (m_vid_profile[video_index] != m_max_profile) 
 {
-
     m_vid_is_valid[video_index] = false;
     return false;
 }
-
 // Check level
 if (m_vid_level[video_index] != m_max_level) 
 {
-
     m_vid_is_valid[video_index] = false;
     return false;
 }

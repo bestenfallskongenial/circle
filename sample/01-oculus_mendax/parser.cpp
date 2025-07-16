@@ -99,58 +99,33 @@ void            CKernel::parser_teture_bmp          (   int fromFile, int toFile
                     */
                     }
 }
+void CKernel::GenerateH264ParserInfo( int video_index)
+{
+        CString bufferParser = m_H264Parser.m_DebugCharArray;
+        filesystem_save_log_file( "emmc1-1", VID__LOG_NAMES[video_index], bufferParser);   
+}
 
 void            CKernel::parser_debug               ()
 {
                 m_H264Parser.ParseVideo(0,
                                         m_bufferVideo,
-                                        VID_LOADED_BYTES,
-                                        VID_WIDTH,
-                                        VID_HEIGHT,
-                                        VID_PROFILE,
-                                        FRAME_ADDRESSES,
-                                        FRAME_LENGTH,
-                                        FRAME_COUNT,
-                                        VID_IS_VALID
+                                        VID_LOADED_BYTES
                                         );
 
-                GenerateH264ParserInfo  (0,
-                                        m_bufferVideo,
-                                        VID_LOADED_BYTES,
-                                        VID_WIDTH,
-                                        VID_HEIGHT,
-                                        VID_PROFILE,
-                                        FRAME_ADDRESSES,
-                                        FRAME_LENGTH,
-                                        FRAME_COUNT,
-                                        VID_IS_VALID
-                                        );
+                GenerateH264ParserInfo  (0);
 
-                filesystem_save_log_file( "emmc1-1", FILENAME_PARSER0, h264_info);
+
 
                 m_H264Parser.ParseVideo(1,
                                         m_bufferVideo,
-                                        VID_LOADED_BYTES,
-                                        VID_WIDTH,
-                                        VID_HEIGHT,
-                                        VID_PROFILE,
-                                        FRAME_ADDRESSES,
-                                        FRAME_LENGTH,
-                                        FRAME_COUNT,
-                                        VID_IS_VALID
+                                        VID_LOADED_BYTES
                                         );
 
-                GenerateH264ParserInfo  (1,
-                                        m_bufferVideo,
-                                        VID_LOADED_BYTES,
-                                        VID_WIDTH,
-                                        VID_HEIGHT,
-                                        VID_PROFILE,
-                                        FRAME_ADDRESSES,
-                                        FRAME_LENGTH,
-                                        FRAME_COUNT,
-                                        VID_IS_VALID
-                                        );
+                GenerateH264ParserInfo  (1);
 
-                filesystem_save_log_file( "emmc1-1", FILENAME_PARSER1, h264_info);        
+
 }
+
+
+
+

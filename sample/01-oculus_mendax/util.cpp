@@ -1,5 +1,6 @@
 #include "kernel.h"
 #include "global.h"
+#include "wavetable.h"
 /*
 extern "C" {
     void vc_host_get_vchi_state(VCHI_INSTANCE_T *initialise_instance, VCHI_CONNECTION_T **connection);
@@ -501,89 +502,4 @@ void            CKernel::util_save_modes_file       ()    // whats up here???
 
                     g_modes.Append("\n");
                     }
-}
-// Generate H.264 parser information string for debugging
-// will soon be done internally in the h264_parser class code
-void            CKernel::GenerateH264ParserInfo     (   int     video_index,
-                                                        char*   buffer_video[],
-                                                        size_t  buffer_size[],    
-                                                        u16     video_width[],
-                                                        u16     video_height[],
-                                                        u8      video_profile[],
-                                                        void*   frame_addresses[][MAX_FRAMES],
-                                                        size_t  length_of_frames[][MAX_FRAMES],
-                                                        int     number_of_frames[],
-                                                        bool    is_video_valid[])
-{
-                // CString h264_info;  // <- needs to be global, no return of this function!
-                h264_info = "";
-                // Create header
-                const char* file_header = 
-                "# --------------------------------------------------------------------------------\n"
-                "# H.264 Video Parse Information (From CH264Parser)\n"
-                "# --------------------------------------------------------------------------------\n\n";
-                h264_info.Append(file_header);
-
-                // Get profile name
-                const char* profile_name = "Unknown";
-                if (video_profile[video_index] == H264_PROFILE_BASELINE) {
-                profile_name = "Baseline";
-                } else if (video_profile[video_index] == H264_PROFILE_MAIN) {
-                profile_name = "Main";
-                } else if (video_profile[video_index] == H264_PROFILE_HIGH) {
-                profile_name = "High";
-                }
-
-                // Add video metadata
-                CString temp_string;
-                temp_string.Format(
-                "Video Index:    %d\n"
-                "Valid:          %s\n"
-                "Resolution:     %dx%d\n"
-                "Profile:        %d (%s)\n"
-                "Frame Count:    %d\n\n",
-                video_index,
-                is_video_valid[video_index] ? "Yes" : "No",
-                video_width[video_index],
-                video_height[video_index],
-                video_profile[video_index],
-                profile_name,
-                number_of_frames[video_index]);
-                h264_info.Append(temp_string);
-
-                // Add frame information
-                h264_info.Append("# --------------------------------------------------------------------------------\n");
-                h264_info.Append("# Frame Information (I-frames only)\n");
-                h264_info.Append("# --------------------------------------------------------------------------------\n");
-                h264_info.Append("# Frame | Address     | Size       | Offset     \n");
-                h264_info.Append("# --------------------------------------------------------------------------------\n");
-
-                // Calculate base address for offset calculation
-                uintptr_t base_address = reinterpret_cast<uintptr_t>(buffer_video[video_index]);
-
-                // List ALL frame details
-                for (int i = 0; i < number_of_frames[video_index]; i++)
-                {
-                uintptr_t frame_addr = reinterpret_cast<uintptr_t>(frame_addresses[video_index][i]);
-                size_t frame_size = length_of_frames[video_index][i];
-                ptrdiff_t offset = frame_addr - base_address;
-
-                temp_string.Format("  %-5d | 0x%08X | %-10d | %-10d\n", 
-                i, frame_addr, frame_size, offset);
-                h264_info.Append(temp_string);
-                }
-
-                h264_info.Append("\n");
-                }
-
-void            CKernel::debug_parser               ()
-{
-                CString temp;
-                temp.Format("\n is vid valid %-8d %-8d \n"
-                "size of video   %-8u %-8u \n"
-                "number frames   %-8d %-8d \n",
-                VID_IS_VALID[0],VID_IS_VALID[1],
-                VID_LOADED_BYTES[0],VID_LOADED_BYTES[1],
-                FRAME_COUNT[0],FRAME_COUNT[1]);
-                m_Screen.Write(temp, strlen(temp));
 }
