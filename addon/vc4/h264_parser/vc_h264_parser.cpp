@@ -19,12 +19,12 @@ CH264Parser::~CH264Parser(void)
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              USER API
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-void    CH264Parser::ParseInitialize (  int     max_videos,  
-                                        int     max_frames,
-                                        u16     max_width,
-                                        u16     max_height,
-                                        u8      max_profile,
-                                        u8      max_level)
+void    CH264Parser::ParseInitialize (  int         max_videos,  
+                                        int         max_frames,
+                                        u16         max_width,
+                                        u16         max_height,
+                                        u8          max_profile,
+                                        u8          max_level)
 {
     m_max_videos  = max_videos;
     m_max_frames  = max_frames;
@@ -33,20 +33,21 @@ void    CH264Parser::ParseInitialize (  int     max_videos,
     m_max_profile = max_profile;
     m_max_level   = max_level;
 }
-bool CH264Parser::ParseVideo(   int            video_index,
-                                const u8* buffer,
-                                size_t         size)
+bool CH264Parser::ParseVideo(    int     video_index,
+    char*   buffer_array[],
+    size_t  size_array[])
+{
+    u8* data  = (u8*)buffer_array[video_index];
+    size_t size = size_array[video_index];
 
-    ParserStoreLog("Video Index",                  
-                video_index 
-                m_video_height[video_index]);                                
-    const u8* data = buffer;
     // Skip potential non-standard leading byte
-    if (size > 4 && data[0] != 0 && data[1] == 0 && data[2] == 0) 
-        {
+    if (size > 4 && data[0] != 0 && data[1] == 0 && data[2] == 0) {
         data++;
         size--;
-        }
+    }
+
+ParserStoreLog("Parser / Frame Log for Video", video_index);
+
     // Reset metadata & log buffer index
     m_video_width[video_index]    = 0;
     m_video_height[video_index]   = 0;
@@ -56,20 +57,19 @@ bool CH264Parser::ParseVideo(   int            video_index,
     m_frame_count[video_index]    = 0;
     m_extradata_valid[video_index] = false;
     m_extradata_len[video_index]   = 0;
+
     // SPS/PPS offsets for extradata
     size_t sps_off = 0, pps_off = 0;
     size_t sps_len = 0, pps_len = 0;
     bool found_sps = false;
     bool found_pps = false;
+
     // --- First pass: find SPS/PPS ---
     size_t pos = 0;
-    while (pos < size - 3) 
-        {
+    while (pos < size - 3) {
         pos = FindNextStartCode(data, pos, size);
-        if (pos >= size - 3) 
-            {
-            break;
-            }
+        if (pos >= size - 3) break;
+
         size_t sc_len = (data[pos + 2] == 1) ? 3 : 4;
         u8 nal_type = data[pos + sc_len] & 0x1F;
 
@@ -78,70 +78,77 @@ bool CH264Parser::ParseVideo(   int            video_index,
                         ? (size - pos - sc_len)
                         : (next_pos - pos - sc_len);
 
-        if (nal_type == NAL_TYPE_SPS && !found_sps) 
-            {
+        if (nal_type == NAL_TYPE_SPS && !found_sps) {
             sps_off = pos;
+
             // Clean SPS
             u8 clean_sps[1024];
             size_t clean_idx = 0;
-            for (size_t i = 1; i < nal_size && clean_idx < sizeof(clean_sps); i++) 
-                {
+            for (size_t i = 1; i < nal_size && clean_idx < sizeof(clean_sps); i++) {
                 if (i >= 3 &&
                     data[pos + sc_len + i - 2] == 0 &&
                     data[pos + sc_len + i - 1] == 0 &&
                     data[pos + sc_len + i] == 3)
-                        {
-                        continue;
-                            
+                    continue;
                 clean_sps[clean_idx++] = data[pos + sc_len + i];
-                }
+            }
+
             // Parse SPS -> width/height/profile/level
             if (ParseSPS(clean_sps, clean_idx,
-                        &m_video_width[video_index],
-                        &m_video_height[video_index],
-                        &m_vid_profile[video_index],
-                        &m_vid_level[video_index])) 
-                        {
-                        found_sps = true;
-                        
-                        if (m_video_width[video_index]  != m_max_width ||   // Check resolution
-                            m_video_height[video_index] != m_max_height) 
-                            {
-                            m_vid_is_valid[video_index] = false;
-                            return false;
-                            }
-                        if (m_vid_profile[video_index] != m_max_profile)    // Check profile
-                            {
-                            m_vid_is_valid[video_index] = false;
-                            return false;
-                            }
-                        if (m_vid_level[video_index] != m_max_level)        // Check level
-                            {
-                            m_vid_is_valid[video_index] = false;
-                            return false;
-                            }
-                        ParserStoreLog("SPS width/height",                  // log parsed SPS info
-                                    m_video_width[video_index],
-                                    m_video_height[video_index]);
-                        ParserStoreLog("SPS profile/level",
-                                    m_vid_profile[video_index],
-                                    m_vid_level[video_index]);
-                        }
+                         &m_video_width[video_index],
+                         &m_video_height[video_index],
+                         &m_vid_profile[video_index],
+                         &m_vid_level[video_index])) {
+                found_sps = true;
+
+// After ParseSPS() successfully filled width/height/profile/level:
+
+// Check resolution
+if (m_video_width[video_index]  != m_max_width ||
+    m_video_height[video_index] != m_max_height) 
+{
+
+    m_vid_is_valid[video_index] = false;
+    return false;
+}
+
+// Check profile
+if (m_vid_profile[video_index] != m_max_profile) 
+{
+
+    m_vid_is_valid[video_index] = false;
+    return false;
+}
+
+// Check level
+if (m_vid_level[video_index] != m_max_level) 
+{
+
+    m_vid_is_valid[video_index] = false;
+    return false;
+}
+
+
+                // log parsed SPS info
+                ParserStoreLog("SPS width/height",
+                               m_video_width[video_index],
+                               m_video_height[video_index]);
+                ParserStoreLog("SPS profile/level",
+                               m_vid_profile[video_index],
+                               m_vid_level[video_index]);
             }
-        else if (nal_type == NAL_TYPE_PPS && !found_pps) 
-            {
+        }
+        else if (nal_type == NAL_TYPE_PPS && !found_pps) {
             pps_off = pos;
             found_pps = true;
-            }
-        if (found_sps && found_pps) 
-            {
-            break;
-            }
-        pos = next_pos;
         }
+
+        if (found_sps && found_pps) break;
+        pos = next_pos;
+    }
+
     // --- Build extradata ---
-    if (found_sps && found_pps) 
-        {
+    if (found_sps && found_pps) {
         size_t sc_sps = (data[sps_off+2] == 1) ? 3 : 4;
         size_t sc_pps = (data[pps_off+2] == 1) ? 3 : 4;
         sps_len = pps_off - (sps_off + sc_sps);
@@ -165,45 +172,39 @@ bool CH264Parser::ParseVideo(   int            video_index,
         ParserStoreMsg(m_extradata[video_index],
                        m_extradata_len[video_index],
                        "EXTRADATA SPS+PPS");
-        }
+    }
+
     // --- Second pass: find IDR frames ---
     int frame_idx = 0;
     pos = 0;
-    while (pos < size - 3 && frame_idx < MAX_FRAMES) 
-        {
+    while (pos < size - 3 && frame_idx < MAX_FRAMES) {
         pos = FindNextStartCode(data, pos, size);
-        if (pos >= size - 3)
-            {
-            break;
-            }
+        if (pos >= size - 3) break;
+
         size_t sc_len = (data[pos + 2] == 1) ? 3 : 4;
         u8 nal_type = data[pos + sc_len] & 0x1F;
 
-        if (nal_type == NAL_TYPE_IDR) 
-            {
+        if (nal_type == NAL_TYPE_IDR) {
             // save pointer + length
             m_frame_address[video_index][frame_idx] = (void*)(data + pos);
             size_t next_pos = FindNextStartCode(data, pos + sc_len, size);
             if (next_pos < size)
-                {
                 m_framelenght[video_index][frame_idx] = next_pos - pos;
-                }
             else
-                {
                 m_framelenght[video_index][frame_idx] = size - pos;
-                }
+
             // log IDR frame pointer + length
             ParserStoreLog("IDR frame addr/len",
-                           (u32)(uintptr_t)m_frame_address[video_index][frame_idx],
+                           (u32)m_frame_address[video_index][frame_idx],
                            (u32)m_framelenght[video_index][frame_idx]);
+
             frame_idx++;
             pos = next_pos;
-            } 
-        else 
-            {
+        } else {
             pos = FindNextStartCode(data, pos + sc_len, size);
-            }
         }
+    }
+
     m_frame_count[video_index] = frame_idx;
     return m_vid_is_valid[video_index];
 }
@@ -499,48 +500,6 @@ bool CH264Parser::ParseSPS(u8* sps_data, size_t sps_size, u16* width, u16* heigh
             *height -= (frame_crop_top_offset + frame_crop_bottom_offset) * 4;
             }
         }
-
-    // NEW: VUI timing info for framerate
-    {
-        u8 vui = (sps_data[bit_offset/8] >> (7 - (bit_offset % 8))) & 0x01;
-        bit_offset++;
-        m_timing_info_present[vid] = vui;
-        if (vui) 
-            {
-            // skip aspect_ratio_flag and any SAR
-            u8 ar = (sps_data[bit_offset/8] >> (7 - (bit_offset % 8))) & 0x01;
-            bit_offset++;
-            if (ar) 
-                {
-                ReadExpGolomb(sps_data, &bit_offset);
-                ReadExpGolomb(sps_data, &bit_offset);
-                }
-            // timing_info_present_flag
-            u8 ti = (sps_data[bit_offset/8] >> (7 - (bit_offset % 8))) & 0x01;
-            bit_offset++;
-            if (ti) 
-                {
-                // num_units_in_tick (32 bits)
-                u32 nu = (sps_data[bit_offset/8]   << 24)
-                       | (sps_data[bit_offset/8+1] << 16)
-                       | (sps_data[bit_offset/8+2] <<  8)
-                       |  sps_data[bit_offset/8+3];
-                bit_offset += 32;
-                // time_scale (32 bits)
-                u32 ts = (sps_data[bit_offset/8]   << 24)
-                       | (sps_data[bit_offset/8+1] << 16)
-                       | (sps_data[bit_offset/8+2] <<  8)
-                       |  sps_data[bit_offset/8+3];
-                bit_offset += 32;
-                // fixed_frame_rate_flag
-                u8 ff = (sps_data[bit_offset/8] >> (7 - (bit_offset % 8))) & 0x01;
-                m_num_units_in_tick[vid]   = nu;
-                m_time_scale_value [vid]   = ts;
-                m_fixed_frame_rate [vid]   = ff;
-                }
-            }
-    }
-    // END NEW
 
     return true;
 }

@@ -8,6 +8,7 @@
 
 #include <circle/types.h>
 
+#define MAX_VIDEOS 8
 // Maximum frames configuration
 #define MAX_FRAMES 2048
 
@@ -41,13 +42,15 @@ public:
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              USER API
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-void            ParseInitialize                             (   u16             max_width,
-                                                                u16             max_height,
-                                                                u8              max_profile,
-                                                                u8              max_level)
-bool            ParseVideo                                  (   int             video_index,
-                                                                const u8*  buffer,
-                                                                size_t          size    )
+void            ParseInitialize (       int         max_videos,  
+                                        int         max_frames,
+                                        u16         max_width,
+                                        u16         max_height,
+                                        u8          max_profile,
+                                        u8          max_level);
+bool            ParseVideo      (       int             video_index,
+                                        char*           buffer_array[], 
+                                        size_t          size_array[]);
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              CALLBACK / HELPERS / UTILITY / WRAPPER
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -90,13 +93,13 @@ public:
                                                                             // Indexed by [video_index][frame_index]    
         int     m_frame_count[MAX_VIDEOS];                                  // Number of IDR frames found for this video stream
         // ---------------- Extradata (SPS+PPS) per stream ------------------------------------------------------------------------------------------------------------
-        u8 m_extradata[MAX_VIDEOS][MAX_EXTRADATA];                     // Raw Annex-B extradata buffer containing SPS+PPS for each video stream
+        u8 m_extradata[MAX_VIDEOS][MMAL_FORMAT_EXTRADATA_MAX_SIZE];                     // Raw Annex-B extradata buffer containing SPS+PPS for each video stream
         size_t  m_extradata_len[MAX_VIDEOS];                                // Length (in bytes) of the extradata buffer for each video stream
         bool    m_extradata_valid[MAX_VIDEOS];                              // Validity flag: true if extradata is ready for SetPortInfo
         // ---------------- Debug logging per stream ------------------------------------------------------------------------------------------------------------------
-        char    m_DebugCharArray[MAX_VIDEOS][MMAL_MAX_DEBUG_FILE_LENGTH];   // Debug log string buffer for each video stream
+        char    m_DebugCharArray[MMAL_MAX_DEBUG_FILE_LENGTH];   // Debug log string buffer for each video stream
                                                                             // Contains SPS/metadata logs, extradata hex dump, IDR frame addresses/lengths
-        u32     m_CharIndex[MAX_VIDEOS];                                    // Current write index in the debug log buffer for each video stream
+        u32     m_CharIndex = 0;                                            // Current write index in the debug log buffer for each video stream
 };
 
 #endif // _vc_h264_parser_h
