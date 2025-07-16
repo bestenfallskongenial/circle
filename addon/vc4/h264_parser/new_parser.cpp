@@ -25,218 +25,150 @@ CH264Parser::~CH264Parser(void)
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              USER API
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-bool CH264Parser::ParseVideo(   int     video_index,
-                                char*   buffer_array[], 
-                                size_t  size_array[], 
-                                u16     vid_width[], 
-                                u16     vid_height[], 
-                                u8      vid_profile[],
-                                u8      vid_level[],
-                                void*   frame_addresses[][MAX_FRAMES],
-                                size_t  length_of_frames[][MAX_FRAMES],
-                                int     number_of_frames[],
-                                bool    is_video_valid[])
+bool CH264Parser::ParseVideo(int video_index,
+                             const uint8_t* buffer,
+                             size_t size)
 {
-    // Get the specific buffer and size for this video using the video_index
-    u8* data = (u8*)buffer_array[video_index];
-    size_t size = size_array[video_index];
-    
-    // FIX 1: Skip non-standard header byte if present
+    const uint8_t* data = buffer;
+
+    // Skip potential non-standard leading byte
     if (size > 4 && data[0] != 0 && data[1] == 0 && data[2] == 0) {
-        // Skip the first byte which appears to be a non-standard header
         data++;
         size--;
     }
-    
 
-    u8* last_sps = nullptr;
-    u8* last_pps = nullptr;
+    // Reset metadata & log buffer index
+    m_video_width[video_index]    = 0;
+    m_video_height[video_index]   = 0;
+    m_vid_profile[video_index]    = 0;
+    m_vid_level[video_index]      = 0;
+    m_vid_is_valid[video_index]   = false;
+    m_frame_count[video_index]    = 0;
+    m_extradata_valid[video_index] = false;
+    m_extradata_len[video_index]   = 0;
 
-    size_t pos = 0;
-    
-    // Initialize validation state
-    bool found_sps = false;
-    bool found_pps = false;
-    bool found_idr = false;
-    
-    // Initialize output values
-    vid_width[video_index] = 0;
-    vid_height[video_index] = 0;
-    vid_profile[video_index] = 0;
-    is_video_valid[video_index] = false;
-    number_of_frames[video_index] = 0;
-    
-    // First pass: Parse metadata
-    while (pos < size - 3) {
-        // Find start code
-        pos = FindNextStartCode(data, pos, size);
-        if (pos >= size - 3) break;
-        
-        // Determine start code length (3 or 4 bytes)
-        size_t start_code_len = (data[pos+2] == 1) ? 3 : 4;
-        
-        // Get NAL unit type
-        u8 nal_type = data[pos + start_code_len] & 0x1F;
-        
-        // Find next start code to calculate NAL unit size
-        size_t next_pos = FindNextStartCode(data, pos + start_code_len, size);
-        size_t nal_size = (next_pos == size) ? (size - pos - start_code_len) : (next_pos - pos - start_code_len);
-        
-        // Process based on NAL type
-        if (nal_type == NAL_TYPE_SPS) {
-            // FIX 2: Create a clean copy of SPS data
-            u8 clean_sps[1024]; 
-            size_t clean_idx = 0;
-            
-            // Skip the NAL header byte (first byte)
-            // FIX 3: Process SPS data starting after NAL header
-            for (size_t i = 1; i < nal_size && clean_idx < sizeof(clean_sps); i++) {
-                // FIX 4: Skip emulation prevention bytes (0x03 after two 0x00)
-                if (i >= 3 && 
-                    data[pos + start_code_len + i - 2] == 0 && 
-                    data[pos + start_code_len + i - 1] == 0 && 
-                    data[pos + start_code_len + i] == 3) {
-                    continue; // Skip the emulation prevention byte
-                }
-                
-                // Copy regular data byte
-                clean_sps[clean_idx++] = data[pos + start_code_len + i];
-            }
-            
-            // Parse the clean SPS data
-            if (ParseSPS(clean_sps, clean_idx, 
-                      &vid_width[video_index], &vid_height[video_index], &vid_profile[video_index], &vid_level[video_index])) {
-                found_sps = true;
-            }
-        } 
-        else if (nal_type == NAL_TYPE_PPS) {
-            found_pps = true;
-        } 
-        else if (nal_type == NAL_TYPE_IDR) {
-            found_idr = true;
-        }
-        
-        // Move to next NAL unit
-        pos = next_pos;
-    }
-    
-    // Basic validation - check if we found SPS and PPS
-    is_video_valid[video_index] = found_sps && found_pps;
-    
-    // Extract I-frame data
-    int frame_count = 0;
-    pos = 0;
-  
-    while (pos < size - 3 && frame_count < MAX_FRAMES) {
-        // Find start code
-        pos = FindNextStartCode(data, pos, size);
-        if (pos >= size - 3) break;
-        
-        // Determine start code length
-        size_t start_code_len = (data[pos+2] == 1) ? 3 : 4;
-        
-        // Get NAL unit type
-        u8 nal_type = data[pos + start_code_len] & 0x1F;
-        
-        // Only process IDR frames (I-frames)
-        if (nal_type == NAL_TYPE_IDR) {
-            // Store frame start address
-            frame_addresses[video_index][frame_count] = data + pos;
-            
-            // Find next start code
-            size_t next_pos = FindNextStartCode(data, pos + start_code_len, size);
-            
-            // Calculate and store frame length
-            if (next_pos < size) {
-                length_of_frames[video_index][frame_count] = next_pos - pos;
-            } else {
-                // Last frame in file
-                length_of_frames[video_index][frame_count] = size - pos;
-            }
-            
-            frame_count++;
-            pos = next_pos;
-        } else {
-            // Skip to next NAL unit
-            size_t next_pos = FindNextStartCode(data, pos + start_code_len, size);
-            pos = next_pos;
-        }
-    }
-
-    // Store total number of frames found
-    number_of_frames[video_index] = frame_count;
-    
-    return true;
-}
-
-bool CH264Parser::CreateExtradata(const uint8_t* data,
-                                  size_t         size,
-                                  uint8_t*       out,
-                                  size_t*        out_length)
-{
-    if (!data || size < 8) return false;
-
-    static const uint8_t sc[4] = {0,0,0,1};
-
-    size_t pos = 0;
+    // SPS/PPS offsets for extradata
     size_t sps_off = 0, pps_off = 0;
     size_t sps_len = 0, pps_len = 0;
+    bool found_sps = false;
+    bool found_pps = false;
 
-    // 1) find SPS (NAL type 7)
-    while (true) {
-        size_t off = FindNextStartCode(data, pos, size);
-        if (off >= size) return false;
+    // --- First pass: find SPS/PPS ---
+    size_t pos = 0;
+    while (pos < size - 3) {
+        pos = FindNextStartCode(data, pos, size);
+        if (pos >= size - 3) break;
 
-        size_t sc_len = (data[off+2] == 1) ? 3 : 4;
-        uint8_t nal_type = data[off + sc_len] & 0x1F;
+        size_t sc_len = (data[pos + 2] == 1) ? 3 : 4;
+        uint8_t nal_type = data[pos + sc_len] & 0x1F;
 
-        if (nal_type == 7) { // SPS
-            sps_off = off;
-            pos = off + sc_len;
-            break;
+        size_t next_pos = FindNextStartCode(data, pos + sc_len, size);
+        size_t nal_size = (next_pos == size)
+                        ? (size - pos - sc_len)
+                        : (next_pos - pos - sc_len);
+
+        if (nal_type == NAL_TYPE_SPS && !found_sps) {
+            sps_off = pos;
+
+            // Clean SPS
+            uint8_t clean_sps[1024];
+            size_t clean_idx = 0;
+            for (size_t i = 1; i < nal_size && clean_idx < sizeof(clean_sps); i++) {
+                if (i >= 3 &&
+                    data[pos + sc_len + i - 2] == 0 &&
+                    data[pos + sc_len + i - 1] == 0 &&
+                    data[pos + sc_len + i] == 3)
+                    continue;
+                clean_sps[clean_idx++] = data[pos + sc_len + i];
+            }
+
+            // Parse SPS -> width/height/profile/level
+            if (ParseSPS(clean_sps, clean_idx,
+                         &m_video_width[video_index],
+                         &m_video_height[video_index],
+                         &m_vid_profile[video_index],
+                         &m_vid_level[video_index])) {
+                found_sps = true;
+
+                // log parsed SPS info
+                ParserstoreLog("SPS width/height",
+                               m_video_width[video_index],
+                               m_video_height[video_index]);
+                ParserstoreLog("SPS profile/level",
+                               m_vid_profile[video_index],
+                               m_vid_level[video_index]);
+            }
         }
-        pos = off + sc_len;
+        else if (nal_type == NAL_TYPE_PPS && !found_pps) {
+            pps_off = pos;
+            found_pps = true;
+        }
+
+        if (found_sps && found_pps) break;
+        pos = next_pos;
     }
 
-    // 2) find PPS (NAL type 8)
-    while (true) {
-        size_t off = FindNextStartCode(data, pos, size);
-        if (off >= size) return false;
+    // --- Build extradata ---
+    if (found_sps && found_pps) {
+        size_t sc_sps = (data[sps_off+2] == 1) ? 3 : 4;
+        size_t sc_pps = (data[pps_off+2] == 1) ? 3 : 4;
+        sps_len = pps_off - (sps_off + sc_sps);
 
-        size_t sc_len = (data[off+2] == 1) ? 3 : 4;
-        uint8_t nal_type = data[off + sc_len] & 0x1F;
+        size_t next_after_pps = FindNextStartCode(data, pps_off + sc_pps, size);
+        if (next_after_pps > size) next_after_pps = size;
+        pps_len = next_after_pps - (pps_off + sc_pps);
 
-        if (nal_type == 8) { // PPS
-            pps_off = off;
-            pos = off + sc_len;
-            break;
-        }
-        pos = off + sc_len;
+        static const uint8_t sc[4] = {0,0,0,1};
+        size_t out_pos = 0;
+        memcpy(m_extradata[video_index] + out_pos, sc, 4); out_pos += 4;
+        memcpy(m_extradata[video_index] + out_pos, data + sps_off + sc_sps, sps_len); out_pos += sps_len;
+        memcpy(m_extradata[video_index] + out_pos, sc, 4); out_pos += 4;
+        memcpy(m_extradata[video_index] + out_pos, data + pps_off + sc_pps, pps_len); out_pos += pps_len;
+
+        m_extradata_len[video_index]   = out_pos;
+        m_extradata_valid[video_index] = true;
+        m_vid_is_valid[video_index]    = true;
+
+        // log full extradata hex dump
+        ParserstoreMsg(m_extradata[video_index],
+                       m_extradata_len[video_index],
+                       "EXTRADATA SPS+PPS");
     }
 
-    // 3) calculate SPS/PPS lengths (exclude their start codes)
-    size_t sc_sps = (data[sps_off+2] == 1) ? 3 : 4;
-    size_t sc_pps = (data[pps_off+2] == 1) ? 3 : 4;
+    // --- Second pass: find IDR frames ---
+    int frame_idx = 0;
+    pos = 0;
+    while (pos < size - 3 && frame_idx < MAX_FRAMES) {
+        pos = FindNextStartCode(data, pos, size);
+        if (pos >= size - 3) break;
 
-    sps_len = pps_off - (sps_off + sc_sps);
+        size_t sc_len = (data[pos + 2] == 1) ? 3 : 4;
+        uint8_t nal_type = data[pos + sc_len] & 0x1F;
 
-    // find the next NAL to know where PPS ends
-    size_t next_after_pps = FindNextStartCode(data, pps_off + sc_pps, size);
-    if (next_after_pps > size) next_after_pps = size;
+        if (nal_type == NAL_TYPE_IDR) {
+            // save pointer + length
+            m_frame_address[video_index][frame_idx] = (void*)(data + pos);
+            size_t next_pos = FindNextStartCode(data, pos + sc_len, size);
+            if (next_pos < size)
+                m_framelenght[video_index][frame_idx] = next_pos - pos;
+            else
+                m_framelenght[video_index][frame_idx] = size - pos;
 
-    pps_len = next_after_pps - (pps_off + sc_pps);
+            // log IDR frame pointer + length
+            ParserstoreLog("IDR frame addr/len",
+                           (u32)(uintptr_t)m_frame_address[video_index][frame_idx],
+                           (u32)m_framelenght[video_index][frame_idx]);
 
-    // 4) build Annex-B extradata: [00 00 00 01][SPS][00 00 00 01][PPS]
-    size_t out_pos = 0;
-    memcpy(out + out_pos, sc, 4);                        out_pos += 4;
-    memcpy(out + out_pos, data + sps_off + sc_sps, sps_len); out_pos += sps_len;
-    memcpy(out + out_pos, sc, 4);                        out_pos += 4;
-    memcpy(out + out_pos, data + pps_off + sc_pps, pps_len); out_pos += pps_len;
+            frame_idx++;
+            pos = next_pos;
+        } else {
+            pos = FindNextStartCode(data, pos + sc_len, size);
+        }
+    }
 
-    *out_length = out_pos;
-    return true;
+    m_frame_count[video_index] = frame_idx;
+    return m_vid_is_valid[video_index];
 }
-
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              CALLBACK / HELPERS / UTILITY / WRAPPER
 //----------------------------------------------------------------------------------------------------------------------------------------------------
