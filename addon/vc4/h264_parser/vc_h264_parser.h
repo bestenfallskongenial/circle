@@ -26,11 +26,15 @@
 class CH264Parser
 {
 public:
-    // Constructor/Destructor
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+//              CONSTRUCTOR / DECONSTRUCTOR
+//----------------------------------------------------------------------------------------------------------------------------------------------------
     CH264Parser(void);
     ~CH264Parser(void);
-
-                                                                                        // Parse an H.264 video buffer using external storag
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+//              USER API
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                                                        // Parse an H.264 video buffer using external storag
 
 bool            ParseVideo                                  (   int             video_index,                            // video_index: Index of video in the arrays
                                                                 char*           buffer_array[],                         // buffer_array: Array of pointers to H.264 video data
@@ -44,7 +48,9 @@ bool            ParseVideo                                  (   int             
                                                                 int             number_of_frames[],                     // number_of_frames: Array to store frame count per video [video_index]
                                                                 bool            is_video_valid[]);                      // is_video_valid: Array to store basic validity check [video_index]
                                                                                                                         // Returns true if parsing completed, false on error
-
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+//              CALLBACK / HELPERS / UTILITY / WRAPPER
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 // In vc_h264_parser.h, update the helper signature:
 bool            CreateExtradata                             (   const uint8_t* data,
                                                                 size_t         size,
