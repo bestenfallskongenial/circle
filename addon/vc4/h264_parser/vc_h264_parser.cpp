@@ -34,13 +34,13 @@ void    CH264Parser::ParseInitialize (  int     max_videos,
     m_max_level   = max_level;
 }
 bool CH264Parser::ParseVideo(   int            video_index,
-                                const uint8_t* buffer,
+                                const u8* buffer,
                                 size_t         size)
 
     ParserStoreLog("Video Index",                  
                 video_index 
                 m_video_height[video_index]);                                
-    const uint8_t* data = buffer;
+    const u8* data = buffer;
     // Skip potential non-standard leading byte
     if (size > 4 && data[0] != 0 && data[1] == 0 && data[2] == 0) 
         {
@@ -71,7 +71,7 @@ bool CH264Parser::ParseVideo(   int            video_index,
             break;
             }
         size_t sc_len = (data[pos + 2] == 1) ? 3 : 4;
-        uint8_t nal_type = data[pos + sc_len] & 0x1F;
+        u8 nal_type = data[pos + sc_len] & 0x1F;
 
         size_t next_pos = FindNextStartCode(data, pos + sc_len, size);
         size_t nal_size = (next_pos == size)
@@ -82,7 +82,7 @@ bool CH264Parser::ParseVideo(   int            video_index,
             {
             sps_off = pos;
             // Clean SPS
-            uint8_t clean_sps[1024];
+            u8 clean_sps[1024];
             size_t clean_idx = 0;
             for (size_t i = 1; i < nal_size && clean_idx < sizeof(clean_sps); i++) 
                 {
@@ -150,7 +150,7 @@ bool CH264Parser::ParseVideo(   int            video_index,
         if (next_after_pps > size) next_after_pps = size;
         pps_len = next_after_pps - (pps_off + sc_pps);
 
-        static const uint8_t sc[4] = {0,0,0,1};
+        static const u8 sc[4] = {0,0,0,1};
         size_t out_pos = 0;
         memcpy(m_extradata[video_index] + out_pos, sc, 4); out_pos += 4;
         memcpy(m_extradata[video_index] + out_pos, data + sps_off + sc_sps, sps_len); out_pos += sps_len;
@@ -177,7 +177,7 @@ bool CH264Parser::ParseVideo(   int            video_index,
             break;
             }
         size_t sc_len = (data[pos + 2] == 1) ? 3 : 4;
-        uint8_t nal_type = data[pos + sc_len] & 0x1F;
+        u8 nal_type = data[pos + sc_len] & 0x1F;
 
         if (nal_type == NAL_TYPE_IDR) 
             {

@@ -46,7 +46,7 @@ void            ParseInitialize                             (   u16             
                                                                 u8              max_profile,
                                                                 u8              max_level)
 bool            ParseVideo                                  (   int             video_index,
-                                                                const uint8_t*  buffer,
+                                                                const u8*  buffer,
                                                                 size_t          size    )
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              CALLBACK / HELPERS / UTILITY / WRAPPER
@@ -90,7 +90,7 @@ public:
                                                                             // Indexed by [video_index][frame_index]    
         int     m_frame_count[MAX_VIDEOS];                                  // Number of IDR frames found for this video stream
         // ---------------- Extradata (SPS+PPS) per stream ------------------------------------------------------------------------------------------------------------
-        uint8_t m_extradata[MAX_VIDEOS][MAX_EXTRADATA];                     // Raw Annex-B extradata buffer containing SPS+PPS for each video stream
+        u8 m_extradata[MAX_VIDEOS][MAX_EXTRADATA];                     // Raw Annex-B extradata buffer containing SPS+PPS for each video stream
         size_t  m_extradata_len[MAX_VIDEOS];                                // Length (in bytes) of the extradata buffer for each video stream
         bool    m_extradata_valid[MAX_VIDEOS];                              // Validity flag: true if extradata is ready for SetPortInfo
         // ---------------- Debug logging per stream ------------------------------------------------------------------------------------------------------------------
