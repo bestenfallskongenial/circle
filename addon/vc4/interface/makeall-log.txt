@@ -1,0 +1,290 @@
+root@WIN-HS0BFGPCN4F:/home/bestenfalls/oculus_mendax/circle/addon/vc4/interface# ./makeall
+  CC    vcos_abort.o
+  CC    vcos_backtrace.o
+  CC    vcos_generic_blockpool.o
+  CC    vcos_generic_event_flags.o
+  CC    vcos_generic_named_sem.o
+  CC    vcos_generic_reentrant_mtx.o
+  CC    vcos_generic_safe_string.o
+  CC    vcos_init.o
+  CC    vcos_logcat.o
+  CC    vcos_mem_from_malloc.o
+  CC    vcos_msgqueue.o
+  CC    vcos_pthreads.o
+  AR    libvcos.a
+  CC    vc_vchi_gencmd.o
+  CC    vc_vchi_dispmanx.o
+  CC    vc_vchi_tvservice.o
+  AR    libvmcs_host.a
+  CC    common/khrn_client.o
+  CC    common/khrn_client_cache.o
+  CC    common/khrn_client_global_image_map.o
+  CC    common/khrn_client_pointermap.o
+  CC    common/khrn_client_vector.o
+  CC    common/khrn_int_hash.o
+  CC    common/khrn_int_image.o
+  CC    common/khrn_int_util.o
+  CC    common/khrn_options.o
+  CC    common/khrn_client_platform_linux.o
+  CC    common/khrn_client_rpc_linux.o
+  CC    egl/egl_client.o
+  CC    egl/egl_client_config.o
+  CC    egl/egl_client_context.o
+  CC    egl/egl_client_get_proc.o
+  CC    egl/egl_client_surface.o
+  CC    ext/egl_brcm_driver_monitor_client.o
+  CC    ext/egl_brcm_flush_client.o
+  CC    ext/egl_brcm_global_image_client.o
+  CC    ext/egl_brcm_perf_monitor_client.o
+  CC    ext/egl_khr_lock_surface_client.o
+  CC    ext/egl_khr_sync_client.o
+  CC    ext/egl_khr_image_client.o
+In file included from ../../../../addon/vc4/interface/vcos/vcos.h:144,
+                 from ../../../../addon/vc4/interface/vmcs_host/vc_dispmanx.h:33,
+                 from ../../../../addon/vc4/interface/khronos/include/EGL/eglplatform.h:110,
+                 from ../../../../addon/vc4/interface/khronos/include/EGL/egl.h:36,
+                 from ../../../../addon/vc4/interface/khronos/common/khrn_client_platform.h:30,
+                 from ../../../../addon/vc4/interface/khronos/common/khrn_client.h:34,
+                 from ext/egl_khr_image_client.c:35:
+ext/egl_khr_image_client.c: In function 'eglCreateImageKHR':
+ext/egl_khr_image_client.c:245:34: warning: format '%u' expects argument of type 'unsigned int', but argument 5 has type 'uint32_t' {aka 'long unsigned int'} [-Wformat=]
+  245 |                   vcos_log_trace("%s: converting buffer handle %u to EGL_IMAGE_BRCM_MULTIMEDIA",
+      |                                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  246 |                         __FUNCTION__, buf[0]);
+      |                                       ~~~~~~
+      |                                          |
+      |                                          uint32_t {aka long unsigned int}
+../../../../addon/vc4/interface/vcos/vcos_logging.h:234:113: note: in definition of macro '_VCOS_LOG_X'
+  234 | t, _level, fmt...)   do { if (vcos_is_log_enabled(cat,_level)) vcos_log_impl(cat,_level,fmt); } while (0)
+      |                                                                                         ^~~
+
+ext/egl_khr_image_client.c:245:19: note: in expansion of macro 'vcos_log_trace'
+  245 |                   vcos_log_trace("%s: converting buffer handle %u to EGL_IMAGE_BRCM_MULTIMEDIA",
+      |                   ^~~~~~~~~~~~~~
+ext/egl_khr_image_client.c:245:65: note: format string is defined here
+  245 |                   vcos_log_trace("%s: converting buffer handle %u to EGL_IMAGE_BRCM_MULTIMEDIA",
+      |                                                                ~^
+      |                                                                 |
+      |                                                                 unsigned int
+      |                                                                %lu
+ext/egl_khr_image_client.c:249:34: warning: format '%u' expects argument of type 'unsigned int', but argument 5 has type 'uint32_t' {aka 'long unsigned int'} [-Wformat=]
+  249 |                   vcos_log_trace("%s: converting buffer handle %u to EGL_IMAGE_BRCM_MULTIMEDIA_Y",
+      |                                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  250 |                         __FUNCTION__, buf[0]);
+      |                                       ~~~~~~
+      |                                          |
+      |                                          uint32_t {aka long unsigned int}
+../../../../addon/vc4/interface/vcos/vcos_logging.h:234:113: note: in definition of macro '_VCOS_LOG_X'
+  234 | t, _level, fmt...)   do { if (vcos_is_log_enabled(cat,_level)) vcos_log_impl(cat,_level,fmt); } while (0)
+      |                                                                                         ^~~
+
+ext/egl_khr_image_client.c:249:19: note: in expansion of macro 'vcos_log_trace'
+  249 |                   vcos_log_trace("%s: converting buffer handle %u to EGL_IMAGE_BRCM_MULTIMEDIA_Y",
+      |                   ^~~~~~~~~~~~~~
+ext/egl_khr_image_client.c:249:65: note: format string is defined here
+  249 |                   vcos_log_trace("%s: converting buffer handle %u to EGL_IMAGE_BRCM_MULTIMEDIA_Y",
+      |                                                                ~^
+      |                                                                 |
+      |                                                                 unsigned int
+      |                                                                %lu
+ext/egl_khr_image_client.c:253:34: warning: format '%u' expects argument of type 'unsigned int', but argument 5 has type 'uint32_t' {aka 'long unsigned int'} [-Wformat=]
+  253 |                   vcos_log_trace("%s: converting buffer handle %u to EGL_IMAGE_BRCM_MULTIMEDIA_U",
+      |                                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  254 |                         __FUNCTION__, buf[0]);
+      |                                       ~~~~~~
+      |                                          |
+      |                                          uint32_t {aka long unsigned int}
+../../../../addon/vc4/interface/vcos/vcos_logging.h:234:113: note: in definition of macro '_VCOS_LOG_X'
+  234 | t, _level, fmt...)   do { if (vcos_is_log_enabled(cat,_level)) vcos_log_impl(cat,_level,fmt); } while (0)
+      |                                                                                         ^~~
+
+ext/egl_khr_image_client.c:253:19: note: in expansion of macro 'vcos_log_trace'
+  253 |                   vcos_log_trace("%s: converting buffer handle %u to EGL_IMAGE_BRCM_MULTIMEDIA_U",
+      |                   ^~~~~~~~~~~~~~
+ext/egl_khr_image_client.c:253:65: note: format string is defined here
+  253 |                   vcos_log_trace("%s: converting buffer handle %u to EGL_IMAGE_BRCM_MULTIMEDIA_U",
+      |                                                                ~^
+      |                                                                 |
+      |                                                                 unsigned int
+      |                                                                %lu
+ext/egl_khr_image_client.c:257:34: warning: format '%u' expects argument of type 'unsigned int', but argument 5 has type 'uint32_t' {aka 'long unsigned int'} [-Wformat=]
+  257 |                   vcos_log_trace("%s: converting buffer handle %u to EGL_IMAGE_BRCM_MULTIMEDIA_V",
+      |                                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  258 |                         __FUNCTION__, buf[0]);
+      |                                       ~~~~~~
+      |                                          |
+      |                                          uint32_t {aka long unsigned int}
+../../../../addon/vc4/interface/vcos/vcos_logging.h:234:113: note: in definition of macro '_VCOS_LOG_X'
+  234 | t, _level, fmt...)   do { if (vcos_is_log_enabled(cat,_level)) vcos_log_impl(cat,_level,fmt); } while (0)
+      |                                                                                         ^~~
+
+ext/egl_khr_image_client.c:257:19: note: in expansion of macro 'vcos_log_trace'
+  257 |                   vcos_log_trace("%s: converting buffer handle %u to EGL_IMAGE_BRCM_MULTIMEDIA_V",
+      |                   ^~~~~~~~~~~~~~
+ext/egl_khr_image_client.c:257:65: note: format string is defined here
+  257 |                   vcos_log_trace("%s: converting buffer handle %u to EGL_IMAGE_BRCM_MULTIMEDIA_V",
+      |                                                                ~^
+      |                                                                 |
+      |                                                                 unsigned int
+      |                                                                %lu
+ext/egl_khr_image_client.c:315:36: warning: format '%d' expects argument of type 'int', but argument 5 has type 'uint32_t' {aka 'long unsigned int'} [-Wformat=]
+  315 |                      vcos_log_info("%s: width %d height %d target %x buffer %p", __FUNCTION__, buffer_width, buffer_height, target, buffer);
+      |                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                ~~~~~~~~~~~~
+      |                                                                                                |
+      |                                                                                                uint32_t {aka long unsigned int}
+../../../../addon/vc4/interface/vcos/vcos_logging.h:234:113: note: in definition of macro '_VCOS_LOG_X'
+  234 | t, _level, fmt...)   do { if (vcos_is_log_enabled(cat,_level)) vcos_log_impl(cat,_level,fmt); } while (0)
+      |                                                                                         ^~~
+
+ext/egl_khr_image_client.c:315:22: note: in expansion of macro 'vcos_log_info'
+  315 |                      vcos_log_info("%s: width %d height %d target %x buffer %p", __FUNCTION__, buffer_width, buffer_height, target, buffer);
+      |                      ^~~~~~~~~~~~~
+ext/egl_khr_image_client.c:315:48: note: format string is defined here
+  315 |                      vcos_log_info("%s: width %d height %d target %x buffer %p", __FUNCTION__, buffer_width, buffer_height, target, buffer);
+      |                                               ~^
+      |                                                |
+      |                                                int
+      |                                               %ld
+ext/egl_khr_image_client.c:315:36: warning: format '%d' expects argument of type 'int', but argument 6 has type 'uint32_t' {aka 'long unsigned int'} [-Wformat=]
+  315 |                      vcos_log_info("%s: width %d height %d target %x buffer %p", __FUNCTION__, buffer_width, buffer_height, target, buffer);
+      |                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                              ~~~~~~~~~~~~~
+      |                                                                                                              |
+      |                                                                                                              uint32_t {aka long unsigned int}
+../../../../addon/vc4/interface/vcos/vcos_logging.h:234:113: note: in definition of macro '_VCOS_LOG_X'
+  234 | t, _level, fmt...)   do { if (vcos_is_log_enabled(cat,_level)) vcos_log_impl(cat,_level,fmt); } while (0)
+      |                                                                                         ^~~
+
+ext/egl_khr_image_client.c:315:22: note: in expansion of macro 'vcos_log_info'
+  315 |                      vcos_log_info("%s: width %d height %d target %x buffer %p", __FUNCTION__, buffer_width, buffer_height, target, buffer);
+      |                      ^~~~~~~~~~~~~
+ext/egl_khr_image_client.c:315:58: note: format string is defined here
+  315 |                      vcos_log_info("%s: width %d height %d target %x buffer %p", __FUNCTION__, buffer_width, buffer_height, target, buffer);
+      |                                                         ~^
+      |                                                          |
+      |                                                          int
+      |                                                         %ld
+ext/egl_khr_image_client.c:346:22: warning: format '%x' expects argument of type 'unsigned int', but argument 7 has type 'EGLint' {aka 'long int'} [-Wformat=]
+  346 |       vcos_log_error("%s:  failed to create image for buffer %p target %d error 0x%x",
+      |                      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  347 |             __FUNCTION__, buffer, target, thread->error);
+      |                                           ~~~~~~~~~~~~~
+      |                                                 |
+      |                                                 EGLint {aka long int}
+../../../../addon/vc4/interface/vcos/vcos_logging.h:234:113: note: in definition of macro '_VCOS_LOG_X'
+  234 | t, _level, fmt...)   do { if (vcos_is_log_enabled(cat,_level)) vcos_log_impl(cat,_level,fmt); } while (0)
+      |                                                                                         ^~~
+
+ext/egl_khr_image_client.c:346:7: note: in expansion of macro 'vcos_log_error'
+  346 |       vcos_log_error("%s:  failed to create image for buffer %p target %d error 0x%x",
+      |       ^~~~~~~~~~~~~~
+ext/egl_khr_image_client.c:346:84: note: format string is defined here
+  346 |       vcos_log_error("%s:  failed to create image for buffer %p target %d error 0x%x",
+      |                                                                                   ~^
+      |                                                                                    |
+      |                                                                                    unsigned int
+      |                                                                                   %lx
+ext/egl_khr_image_client.c: In function 'eglIntImageSetColorData':
+ext/egl_khr_image_client.c:414:22: warning: format '%d' expects argument of type 'int', but argument 5 has type 'long unsigned int' [-Wformat=]
+  414 |       vcos_log_trace("[%s] egl im %d (%d,%d,%d,%d)",__FUNCTION__, (uint32_t)image, x_offset, y_offset, width, height);
+      |                      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~               ~~~~~~~~~~~~~~~
+      |                                                                   |
+      |                                                                   long unsigned int
+../../../../addon/vc4/interface/vcos/vcos_logging.h:234:113: note: in definition of macro '_VCOS_LOG_X'
+  234 | t, _level, fmt...)   do { if (vcos_is_log_enabled(cat,_level)) vcos_log_impl(cat,_level,fmt); } while (0)
+      |                                                                                         ^~~
+
+ext/egl_khr_image_client.c:414:7: note: in expansion of macro 'vcos_log_trace'
+  414 |       vcos_log_trace("[%s] egl im %d (%d,%d,%d,%d)",__FUNCTION__, (uint32_t)image, x_offset, y_offset, width, height);
+      |       ^~~~~~~~~~~~~~
+ext/egl_khr_image_client.c:414:36: note: format string is defined here
+  414 |       vcos_log_trace("[%s] egl im %d (%d,%d,%d,%d)",__FUNCTION__, (uint32_t)image, x_offset, y_offset, width, height);
+      |                                   ~^
+      |                                    |
+      |                                    int
+      |                                   %ld
+ext/egl_khr_image_client.c:414:22: warning: format '%d' expects argument of type 'int', but argument 6 has type 'uint32_t' {aka 'long unsigned int'} [-Wformat=]
+  414 |       vcos_log_trace("[%s] egl im %d (%d,%d,%d,%d)",__FUNCTION__, (uint32_t)image, x_offset, y_offset, width, height);
+      |                      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                                ~~~~~~~~
+      |                                                                                    |
+      |                                                                                    uint32_t {aka long unsigned int}
+../../../../addon/vc4/interface/vcos/vcos_logging.h:234:113: note: in definition of macro '_VCOS_LOG_X'
+  234 | t, _level, fmt...)   do { if (vcos_is_log_enabled(cat,_level)) vcos_log_impl(cat,_level,fmt); } while (0)
+      |                                                                                         ^~~
+
+ext/egl_khr_image_client.c:414:7: note: in expansion of macro 'vcos_log_trace'
+  414 |       vcos_log_trace("[%s] egl im %d (%d,%d,%d,%d)",__FUNCTION__, (uint32_t)image, x_offset, y_offset, width, height);
+      |       ^~~~~~~~~~~~~~
+ext/egl_khr_image_client.c:414:40: note: format string is defined here
+  414 |       vcos_log_trace("[%s] egl im %d (%d,%d,%d,%d)",__FUNCTION__, (uint32_t)image, x_offset, y_offset, width, height);
+      |                                       ~^
+      |                                        |
+      |                                        int
+      |                                       %ld
+ext/egl_khr_image_client.c:414:22: warning: format '%d' expects argument of type 'int', but argument 7 has type 'uint32_t' {aka 'long unsigned int'} [-Wformat=]
+  414 |       vcos_log_trace("[%s] egl im %d (%d,%d,%d,%d)",__FUNCTION__, (uint32_t)image, x_offset, y_offset, width, height);
+      |                      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                                          ~~~~~~~~
+      |                                                                                              |
+      |                                                                                              uint32_t {aka long unsigned int}
+../../../../addon/vc4/interface/vcos/vcos_logging.h:234:113: note: in definition of macro '_VCOS_LOG_X'
+  234 | t, _level, fmt...)   do { if (vcos_is_log_enabled(cat,_level)) vcos_log_impl(cat,_level,fmt); } while (0)
+      |                                                                                         ^~~
+
+ext/egl_khr_image_client.c:414:7: note: in expansion of macro 'vcos_log_trace'
+  414 |       vcos_log_trace("[%s] egl im %d (%d,%d,%d,%d)",__FUNCTION__, (uint32_t)image, x_offset, y_offset, width, height);
+      |       ^~~~~~~~~~~~~~
+ext/egl_khr_image_client.c:414:43: note: format string is defined here
+  414 |       vcos_log_trace("[%s] egl im %d (%d,%d,%d,%d)",__FUNCTION__, (uint32_t)image, x_offset, y_offset, width, height);
+      |                                          ~^
+      |                                           |
+      |                                           int
+      |                                          %ld
+ext/egl_khr_image_client.c:414:22: warning: format '%d' expects argument of type 'int', but argument 8 has type 'uint32_t' {aka 'long unsigned int'} [-Wformat=]
+  414 |       vcos_log_trace("[%s] egl im %d (%d,%d,%d,%d)",__FUNCTION__, (uint32_t)image, x_offset, y_offset, width, height);
+      |                      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                                                    ~~~~~
+      |                                                                                                        |
+      |                                                                                                        uint32_t {aka long unsigned int}
+../../../../addon/vc4/interface/vcos/vcos_logging.h:234:113: note: in definition of macro '_VCOS_LOG_X'
+  234 | t, _level, fmt...)   do { if (vcos_is_log_enabled(cat,_level)) vcos_log_impl(cat,_level,fmt); } while (0)
+      |                                                                                         ^~~
+
+ext/egl_khr_image_client.c:414:7: note: in expansion of macro 'vcos_log_trace'
+  414 |       vcos_log_trace("[%s] egl im %d (%d,%d,%d,%d)",__FUNCTION__, (uint32_t)image, x_offset, y_offset, width, height);
+      |       ^~~~~~~~~~~~~~
+ext/egl_khr_image_client.c:414:46: note: format string is defined here
+  414 |       vcos_log_trace("[%s] egl im %d (%d,%d,%d,%d)",__FUNCTION__, (uint32_t)image, x_offset, y_offset, width, height);
+      |                                             ~^
+      |                                              |
+      |                                              int
+      |                                             %ld
+ext/egl_khr_image_client.c:414:22: warning: format '%d' expects argument of type 'int', but argument 9 has type 'uint32_t' {aka 'long unsigned int'} [-Wformat=]
+  414 |       vcos_log_trace("[%s] egl im %d (%d,%d,%d,%d)",__FUNCTION__, (uint32_t)image, x_offset, y_offset, width, height);
+      |                      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                                                           ~~~~~~
+      |                                                                                                               |
+      |                                                                                                               uint32_t {aka long unsigned int}
+../../../../addon/vc4/interface/vcos/vcos_logging.h:234:113: note: in definition of macro '_VCOS_LOG_X'
+  234 | t, _level, fmt...)   do { if (vcos_is_log_enabled(cat,_level)) vcos_log_impl(cat,_level,fmt); } while (0)
+      |                                                                                         ^~~
+
+ext/egl_khr_image_client.c:414:7: note: in expansion of macro 'vcos_log_trace'
+  414 |       vcos_log_trace("[%s] egl im %d (%d,%d,%d,%d)",__FUNCTION__, (uint32_t)image, x_offset, y_offset, width, height);
+      |       ^~~~~~~~~~~~~~
+ext/egl_khr_image_client.c:414:49: note: format string is defined here
+  414 |       vcos_log_trace("[%s] egl im %d (%d,%d,%d,%d)",__FUNCTION__, (uint32_t)image, x_offset, y_offset, width, height);
+      |                                                ~^
+      |                                                 |
+      |                                                 int
+      |                                                %ld
+  CC    ext/ext_gl_debug_marker.o
+  CC    ext/gl_oes_draw_texture_client.o
+  CC    ext/gl_oes_egl_image_client.o
+  CC    ext/gl_oes_framebuffer_object.o
+  CC    ext/gl_oes_map_buffer.o
+  CC    ext/gl_oes_matrix_palette_client.o
+  CC    ext/gl_oes_query_matrix_client.o
+  CC    glxx/glxx_client.o
+  CC    vg/vg_client.o
+  CC    vg/vg_int_mat3x3.o
+  AR    libkhrn_client.a
+  CC    bcm_host.o
+  AR    libbcm_host.a
+root@WIN-HS0BFGPCN4F:/home/bestenfalls/oculus_mendax/circle/addon/vc4/interface#
