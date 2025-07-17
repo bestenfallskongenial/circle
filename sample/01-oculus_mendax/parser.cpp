@@ -101,7 +101,7 @@ void            CKernel::parser_teture_bmp          (   int fromFile, int toFile
 }
 void CKernel::GenerateH264ParserInfo( int video_index)
 {
-        CString bufferParser = m_H264Parser.m_DebugCharArray;
+        CString bufferParser = m_H264Parser.m_DebugCharArray[video_index];
         filesystem_save_log_file( "emmc1-1", VID__LOG_NAMES[video_index], bufferParser);   
 }
 

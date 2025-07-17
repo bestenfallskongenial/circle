@@ -73,7 +73,7 @@ bool           b_is_hold = false;
                 float                   GLtime                                                              =  0.0f;
                 float                   opaque                                                              =  1.0f;
 
-        const   char                    *VID__LOG_NAMES                          [VID_SD+VID_USB]                   = { "VIDLOG00.264",   "VIDLOG01.264",  "VIDLOG02.264",   "VIDLOG03.264", "VIDLOG04.264",   "VIDLOG05.264",  "VIDLOG06.264",   "VIDLOG07.264"    };
+        const   char                    *VID__LOG_NAMES                          [VID_SD+VID_USB]                   = { "VIDLOG00.TXT",   "VIDLOG01.TXT",  "VIDLOG02.TXT",   "VIDLOG03.TXT", "VIDLOG04.TXT",   "VIDLOG05.TXT",  "VIDLOG06.TXT",   "VIDLOG07.TXT",  "VIDLOG08.TXT",   "VIDLOG09.TXT"    };
 
                 char                   *SCANED_FILES_VSH                         [40]                       = {   0    };
                 char                   *SCANED_FILES_FSH                         [40]                       = {   0    };

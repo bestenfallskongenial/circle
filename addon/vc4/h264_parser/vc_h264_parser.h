@@ -55,10 +55,10 @@ bool            ParseVideo      (       int             video_index,
 //              CALLBACK / HELPERS / UTILITY / WRAPPER
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 private:
-        void    ParserStoreLog                              (   const char* label, 
+        void    ParserStoreLog                              (   int video_index,const char* label, 
                                                                 u32 value1 = STOREDEBUG_WHITESPACE, 
                                                                 u32 value2 = STOREDEBUG_WHITESPACE);
-        void    ParserStoreMsg                              (   const void* tx_msg, u32 total_size, const char* label);
+        void    ParserStoreMsg                              (   int video_index,const void* tx_msg, u32 total_size, const char* label);
 size_t          FindNextStartCode                           (   u8*             data, 
                                                                 size_t          pos, 
                                                                 size_t          size) const;
@@ -97,9 +97,9 @@ public:
         size_t  m_extradata_len[MAX_VIDEOS];                                // Length (in bytes) of the extradata buffer for each video stream
         bool    m_extradata_valid[MAX_VIDEOS];                              // Validity flag: true if extradata is ready for SetPortInfo
         // ---------------- Debug logging per stream ------------------------------------------------------------------------------------------------------------------
-        char    m_DebugCharArray[MMAL_MAX_DEBUG_FILE_LENGTH];   // Debug log string buffer for each video stream
+        char    m_DebugCharArray[MAX_VIDEOS][MMAL_MAX_DEBUG_FILE_LENGTH] = { 0 };   // Debug log string buffer for each video stream
                                                                             // Contains SPS/metadata logs, extradata hex dump, IDR frame addresses/lengths
-        u32     m_CharIndex = 0;                                            // Current write index in the debug log buffer for each video stream
+        u32     m_CharIndex[MAX_VIDEOS] = { 0 };                                            // Current write index in the debug log buffer for each video stream
 };
 
 #endif // _vc_h264_parser_h
