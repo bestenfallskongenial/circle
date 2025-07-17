@@ -105,25 +105,13 @@ void CKernel::GenerateH264ParserInfo( int video_index)
         filesystem_save_log_file( "emmc1-1", VID__LOG_NAMES[video_index], bufferParser);   
 }
 
-void            CKernel::parser_debug               ()
+void            CKernel::parser_debug               (int fromFile, int toFile)
 {
-                m_H264Parser.ParseVideo(0,
-                                        m_bufferVideo,
-                                        VID_LOADED_BYTES
-                                        );
-
-                GenerateH264ParserInfo  (0);
-
-
-
-                m_H264Parser.ParseVideo(1,
-                                        m_bufferVideo,
-                                        VID_LOADED_BYTES
-                                        );
-
-                GenerateH264ParserInfo  (1);
-
-
+    for (int i = fromFile; i < toFile; i++) 
+        {
+                m_H264Parser.ParseVideo(i, m_bufferVideo, VID_LOADED_BYTES );
+                GenerateH264ParserInfo  (i);
+        }
 }
 
 

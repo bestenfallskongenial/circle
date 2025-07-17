@@ -316,7 +316,7 @@ public:
                  
 	void 			util_save_modes_file		();
 	void 			parser_teture_bmp			(	int fromFile, int toFile);	// simplify ?!
-	void 			parser_debug();
+	void 			parser_debug				(	int fromFile, int toFile);
 
 	void   			gfx_check					(	const char *file, unsigned line);
 	void			gfx_shader_log				(	GLint shader, int shaderIndex);
@@ -346,7 +346,7 @@ public:
 //  void			menu_mode_assign_audio		();	
 //  void			debug						();
 
-	void 			GenerateH264ParserInfo		(	int     video_index);
+	void 			GenerateH264ParserInfo		(	int     video_index, );
 
 
 private:

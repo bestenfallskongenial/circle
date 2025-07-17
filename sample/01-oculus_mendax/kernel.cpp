@@ -180,7 +180,7 @@ m_H264Decoder.MMALinitialize           (                                m_VCSMin
 
                     m_Watchdog.Start(TIMEOUT);
 
-                    parser_debug(); 
+                    parser_debug(VID_LOADED_OLD, VID_LOADED_NEW); 
 
                     m_Timer.MsDelay(100);
  
