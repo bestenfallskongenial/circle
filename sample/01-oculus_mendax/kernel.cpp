@@ -159,7 +159,7 @@ m_H264Decoder.MMALinitialize           (                                m_VCSMin
                     return ShutdownReboot;      // If the update was successful, proceed with reboot
                     }
 
-
+            m_H264Parser.ParseInitialize( 8, 2048, 640, 480, 66, 41);            
             //  m_USBHCI.UpdatePlugAndPlay();
     
                 m_Timer.MsDelay(500);

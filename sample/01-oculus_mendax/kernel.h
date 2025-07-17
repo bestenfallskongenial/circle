@@ -346,7 +346,7 @@ public:
 //  void			menu_mode_assign_audio		();	
 //  void			debug						();
 
-	void 			GenerateH264ParserInfo		(	int     video_index, );
+	void 			GenerateH264ParserInfo		(	int     video_index );
 
 
 private:

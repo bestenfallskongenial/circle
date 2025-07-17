@@ -170,6 +170,7 @@ bool CH264Parser::ParseVideo(    int     video_index, char*   buffer_array[], si
         }
     m_frame_count[video_index] = frame_idx;
 
+    ParserStoreLog(video_index,"\nParsed Frames           ",frame_idx);
     // Check resolution
     if (m_video_width[video_index]  != m_max_width || m_video_height[video_index] != m_max_height)
         {
@@ -196,6 +197,71 @@ bool CH264Parser::ParseVideo(    int     video_index, char*   buffer_array[], si
 
         return m_vid_is_valid[video_index];
 }
+bool CH264Parser::parser_texture_bmp(int texture_index,
+                                     char* buffer_array[],
+                                     size_t size_array[])
+{
+    u8*    data = reinterpret_cast<u8*>(buffer_array[texture_index]);
+    size_t size = size_array[texture_index];
+
+    // — initialize log entry for this texture —
+    ParserStoreLog(texture_index, "=== BMP header parse start ===",
+                   STOREDEBUG_WHITESPACE, STOREDEBUG_WHITESPACE);
+
+    if (size < 38)
+    {
+        ParserStoreLog(texture_index, "BMP too small to parse", 
+                       static_cast<u32>(size), STOREDEBUG_WHITESPACE);
+        return m_tex_valid[texture_index] = false;
+    }
+
+    // read fields
+    u32 fileSize    = data[2]  | (data[3]<<8)  | (data[4]<<16)  | (data[5]<<24);
+    u32 dataOffset  = data[10] | (data[11]<<8) | (data[12]<<16) | (data[13]<<24);
+    u32 headerSize  = data[14] | (data[15]<<8) | (data[16]<<16) | (data[17]<<24);
+    u16 planes      = data[26] | (data[27]<<8);
+    u16 bpp         = data[28] | (data[29]<<8);
+    u32 compression = data[30] | (data[31]<<8) | (data[32]<<16) | (data[33]<<24);
+    u32 width       = data[18] | (data[19]<<8) | (data[20]<<16) | (data[21]<<24);
+    u32 height      = data[22] | (data[23]<<8) | (data[24]<<16) | (data[25]<<24);
+    u32 imgSize     = data[34] | (data[35]<<8) | (data[36]<<16) | (data[37]<<24);
+
+    // log raw header fields
+    ParserStoreLog(texture_index, "BMP fileSize/dataOffset", fileSize, dataOffset);
+    ParserStoreLog(texture_index, "BMP headerSize/planes", headerSize, planes);
+    ParserStoreLog(texture_index, "BMP bpp/compression", bpp, compression);
+    ParserStoreLog(texture_index, "BMP width/height", width, height);
+    ParserStoreLog(texture_index, "BMP imgSize", imgSize, STOREDEBUG_WHITESPACE);
+
+    // (optional) dump the first 38 bytes of the header
+    ParserStoreMsg(texture_index, data, 38, "BMP Header Hex Dump");
+
+    // validate
+    bool ok = 
+         data[0]=='B' && data[1]=='M'
+      && fileSize   <= m_max_tex_size
+      && headerSize == 40
+      && planes     == 1
+      && bpp        == 24
+      && compression== 0
+      && width*height*3 == imgSize;
+
+    m_tex_valid[texture_index]       = ok;
+    m_tex_file_size[texture_index]   = fileSize;
+    m_tex_data_offset[texture_index] = dataOffset;
+    m_tex_width[texture_index]       = static_cast<u16>(width);
+    m_tex_height[texture_index]      = static_cast<u16>(height);
+    m_tex_image_size[texture_index]  = imgSize;
+
+    // final status
+    ParserStoreLog(texture_index,
+                   ok ? "BMP header VALID" : "BMP header FAILED",
+                   STOREDEBUG_WHITESPACE,
+                   STOREDEBUG_WHITESPACE);
+
+    return ok;
+}
+
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              CALLBACK / HELPERS / UTILITY / WRAPPER
 //----------------------------------------------------------------------------------------------------------------------------------------------------

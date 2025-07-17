@@ -9,6 +9,9 @@
 #include <circle/types.h>
 
 #define MAX_VIDEOS 8
+#define MAX_TEXTURES 8
+
+#define         TEX_SIZE                (1024*1024*4)  	// 4194304	// size of texture ( .bpm ) files
 // Maximum frames configuration
 #define MAX_FRAMES 2048
 
@@ -42,15 +45,18 @@ public:
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              USER API
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-bool            ParseInitialize (       int         max_videos,  
-                                        int         max_frames,
-                                        u16         max_width,
-                                        u16         max_height,
-                                        u8          max_profile,
-                                        u8          max_level);
-bool            ParseVideo      (       int             video_index,
-                                        char*           buffer_array[], 
-                                        size_t          size_array[]);
+bool            ParseInitialize         (       int     max_videos,  
+                                                int     max_frames,
+                                                u16     max_width,
+                                                u16     max_height,
+                                                u8      max_profile,
+                                                u8      max_level);
+bool            ParseVideo              (       int     video_index,
+                                                char*   buffer_array[], 
+                                                size_t  size_array[]);
+bool            parser_texture_bmp      (       int     texture_index,
+                                                char*   buffer_array[],
+                                                size_t  size_array[]);
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              CALLBACK / HELPERS / UTILITY / WRAPPER
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -76,6 +82,7 @@ u32             ReadExpGolomb                               (   u8*             
 public: 
         int     m_max_videos;
         int     m_max_frames;
+        u32     m_max_tex_size;
         u16     m_max_width;
         u16     m_max_height;
         u8      m_max_profile;
@@ -100,6 +107,13 @@ public:
         char    m_DebugCharArray[MAX_VIDEOS][MMAL_MAX_DEBUG_FILE_LENGTH] = { 0 };   // Debug log string buffer for each video stream
                                                                             // Contains SPS/metadata logs, extradata hex dump, IDR frame addresses/lengths
         u32     m_CharIndex[MAX_VIDEOS] = { 0 };                                            // Current write index in the debug log buffer for each video stream
+// Per-texture metadata arrays:
+bool    m_tex_valid[MAX_TEXTURES];        // true if header passed all BMP checks
+u32     m_tex_file_size[MAX_TEXTURES];    // value of the BMP “file size” field
+u32     m_tex_data_offset[MAX_TEXTURES];  // value of the BMP “pixel data” offset field
+u16     m_tex_width[MAX_TEXTURES];        // decoded width from the BMP header
+u16     m_tex_height[MAX_TEXTURES];       // decoded height from the BMP header
+u32     m_tex_image_size[MAX_TEXTURES];   // decoded image-data byte count (width×height×3)
 };
 
 #endif // _vc_h264_parser_h
