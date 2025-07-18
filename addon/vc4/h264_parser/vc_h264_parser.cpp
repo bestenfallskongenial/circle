@@ -252,7 +252,7 @@ bool CH264Parser::ParseBPM          (int file_index, char* buffer_array[], size_
     ParserStoreLog(file_index, "BMP imgSize              ", imgSize);
 
     // (optional) dump the first 38 bytes of the header
-    ParserStoreMsg(file_index, data, 38, "BMP Header Hex Dump");
+    ParserStoreMsg(file_index, data, headerSize, "BMP Header Hex Dump");
 
     // validate
     bool ok = 
