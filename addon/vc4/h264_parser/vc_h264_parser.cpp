@@ -37,10 +37,15 @@ bool    CH264Parser::ParseInitialize (  int         max_videos,
 
     return true;
 }
-bool CH264Parser::ParseVideo(    int     video_index, char*   buffer_array[], size_t  size_array[])
+bool CH264Parser::ParseVideo(    int     file_index, char*   buffer_array[], size_t  size_array[])
 {
-    u8* data  = (u8*)buffer_array[video_index];
-    size_t size = size_array[video_index];
+    m_CharIndex[file_index] = 0;
+    memset(m_DebugCharArray[file_index], 
+                0, 
+                sizeof m_DebugCharArray[file_index]);
+
+    u8* data  = (u8*)buffer_array[file_index];
+    size_t size = size_array[file_index];
 
     
     if (size > 4 && data[0] != 0 && data[1] == 0 && data[2] == 0)                                                   // Skip potential non-standard leading byte
@@ -49,16 +54,16 @@ bool CH264Parser::ParseVideo(    int     video_index, char*   buffer_array[], si
         size--;
         }
 
-    ParserStoreLog(video_index,"Parser / Frame Log for Video  ", video_index);
+    ParserStoreLog(file_index,"Parser / Frame Log for Video  ", file_index);
 
-    m_video_width[video_index]    = 0;                                                                              // Reset metadata & log buffer index
-    m_video_height[video_index]   = 0;
-    m_vid_profile[video_index]    = 0;
-    m_vid_level[video_index]      = 0;
-    m_vid_is_valid[video_index]   = false;
-    m_frame_count[video_index]    = 0;
-    m_extradata_valid[video_index] = false;
-    m_extradata_len[video_index]   = 0;
+    m_video_width[file_index]    = 0;                                                                              // Reset metadata & log buffer index
+    m_video_height[file_index]   = 0;
+    m_vid_profile[file_index]    = 0;
+    m_vid_level[file_index]      = 0;
+    m_vid_is_valid[file_index]   = false;
+    m_frame_count[file_index]    = 0;
+    m_extradata_valid[file_index] = false;
+    m_extradata_len[file_index]   = 0;
 
     size_t sps_off = 0, pps_off = 0;                                                                                // SPS/PPS offsets for extradata
     size_t sps_len = 0, pps_len = 0;
@@ -92,14 +97,14 @@ bool CH264Parser::ParseVideo(    int     video_index, char*   buffer_array[], si
                 clean_sps[clean_idx++] = data[pos + sc_len + i];
             }   
             if (ParseSPS(   clean_sps, clean_idx,                                                                   // Parse SPS -> width/height/profile/level
-                            &m_video_width[video_index],
-                            &m_video_height[video_index],
-                            &m_vid_profile[video_index],
-                            &m_vid_level[video_index])) {
+                            &m_video_width[file_index],
+                            &m_video_height[file_index],
+                            &m_vid_profile[file_index],
+                            &m_vid_level[file_index])) {
                 found_sps = true;
                 // log parsed SPS info
-                ParserStoreLog(video_index,"\nSPS width/height   ", m_video_width[video_index], m_video_height[video_index]);
-                ParserStoreLog(video_index,"SPS profile/level  ", m_vid_profile[video_index], m_vid_level[video_index]);
+                ParserStoreLog(file_index,"\nSPS width/height   ", m_video_width[file_index], m_video_height[file_index]);
+                ParserStoreLog(file_index,"SPS profile/level  ", m_vid_profile[file_index], m_vid_level[file_index]);
             }
         }
         else if (nal_type == NAL_TYPE_PPS && !found_pps) 
@@ -124,16 +129,16 @@ bool CH264Parser::ParseVideo(    int     video_index, char*   buffer_array[], si
         static const u8 sc[4] = {0,0,0,1};
         size_t out_pos = 0;
 
-        memcpy(m_extradata[video_index] + out_pos, sc, 4); out_pos += 4;
-        memcpy(m_extradata[video_index] + out_pos, data + sps_off + sc_sps, sps_len); out_pos += sps_len;
-        memcpy(m_extradata[video_index] + out_pos, sc, 4); out_pos += 4;
-        memcpy(m_extradata[video_index] + out_pos, data + pps_off + sc_pps, pps_len); out_pos += pps_len;
+        memcpy(m_extradata[file_index] + out_pos, sc, 4); out_pos += 4;
+        memcpy(m_extradata[file_index] + out_pos, data + sps_off + sc_sps, sps_len); out_pos += sps_len;
+        memcpy(m_extradata[file_index] + out_pos, sc, 4); out_pos += 4;
+        memcpy(m_extradata[file_index] + out_pos, data + pps_off + sc_pps, pps_len); out_pos += pps_len;
 
-        m_extradata_len[video_index]   = out_pos;
-        m_extradata_valid[video_index] = true;
-        m_vid_is_valid[video_index]    = true;
+        m_extradata_len[file_index]   = out_pos;
+        m_extradata_valid[file_index] = true;
+        m_vid_is_valid[file_index]    = true;
 
-        ParserStoreMsg(video_index,m_extradata[video_index], m_extradata_len[video_index], "EXTRADATA SPS+PPS\n");  // log full extradata hex dump
+        ParserStoreMsg(file_index,m_extradata[file_index], m_extradata_len[file_index], "EXTRADATA SPS+PPS\n");  // log full extradata hex dump
     }
     int frame_idx = 0;                                                                                              // --- Second pass: find IDR frames ---
     pos = 0;
@@ -149,17 +154,17 @@ bool CH264Parser::ParseVideo(    int     video_index, char*   buffer_array[], si
 
         if (nal_type == NAL_TYPE_IDR) 
             {
-            m_frame_address[video_index][frame_idx] = (void*)(data + pos);                                          // save pointer + length
+            m_frame_address[file_index][frame_idx] = (void*)(data + pos);                                          // save pointer + length
             size_t next_pos = FindNextStartCode(data, pos + sc_len, size);
             if (next_pos < size)
                 {
-                m_framelenght[video_index][frame_idx] = next_pos - pos;
+                m_framelenght[file_index][frame_idx] = next_pos - pos;
                 }
             else
                 {
-                m_framelenght[video_index][frame_idx] = size - pos;
+                m_framelenght[file_index][frame_idx] = size - pos;
                 }    
-            ParserStoreLog(video_index,"IDR frame addr/len", (u32)m_frame_address[video_index][frame_idx], (u32)m_framelenght[video_index][frame_idx]);// log IDR frame pointer + length
+            ParserStoreLog(file_index,"IDR frame addr/len", (u32)m_frame_address[file_index][frame_idx], (u32)m_framelenght[file_index][frame_idx]);// log IDR frame pointer + length
             frame_idx++;
             pos = next_pos;
             }
@@ -168,50 +173,55 @@ bool CH264Parser::ParseVideo(    int     video_index, char*   buffer_array[], si
             pos = FindNextStartCode(data, pos + sc_len, size);
             }
         }
-    m_frame_count[video_index] = frame_idx;
+    m_frame_count[file_index] = frame_idx;
 
-    ParserStoreLog(video_index,"\nParsed Frames           ",frame_idx);
+    ParserStoreLog(file_index,"\nParsed Frames           ",frame_idx);
     // Check resolution
-    if (m_video_width[video_index]  != m_max_width || m_video_height[video_index] != m_max_height)
+    if (m_video_width[file_index]  != m_max_width || m_video_height[file_index] != m_max_height)
         {
-        m_vid_is_valid[video_index] = false;
+        m_vid_is_valid[file_index] = false;
         }
     // Check profile
-    if (m_vid_profile[video_index] != m_max_profile)
+    if (m_vid_profile[file_index] != m_max_profile)
         {
-        m_vid_is_valid[video_index] = false;
+        m_vid_is_valid[file_index] = false;
         }
     // Check level
-    if (m_vid_level[video_index] != m_max_level)
+    if (m_vid_level[file_index] != m_max_level)
         {
-        m_vid_is_valid[video_index] = false;
+        m_vid_is_valid[file_index] = false;
         }
-     if (m_vid_is_valid[video_index])
+     if (m_vid_is_valid[file_index])
         {   
-        ParserStoreLog(video_index,"\nMetaData Valid for Video",video_index);
+        ParserStoreLog(file_index,"\nMetaData Valid for Video",file_index);
         }
     else    
         {   
-        ParserStoreLog(video_index,"\nMetaData Invalid for Video",video_index);
+        ParserStoreLog(file_index,"\nMetaData Invalid for Video",file_index);
         }
 
-        return m_vid_is_valid[video_index];
+        return m_vid_is_valid[file_index];
 }
-bool CH264Parser::ParseBPM          (int texture_index, char* buffer_array[], size_t size_array[])
+bool CH264Parser::ParseBPM          (int file_index, char* buffer_array[], size_t size_array[])
 {
-    u8*    data = reinterpret_cast<u8*>(buffer_array[texture_index]);
-    size_t size = size_array[texture_index];
+    m_CharIndex[file_index] = 0;
+    memset(m_DebugCharArray[file_index], 
+                0, 
+                sizeof m_DebugCharArray[file_index]);
+
+    u8*    data = reinterpret_cast<u8*>(buffer_array[file_index]);
+    size_t size = size_array[file_index];
 
     // — initialize log entry for this texture —
-    ParserStoreLog(texture_index, "=== BMP header parse start ===", texture_index);
-
+    ParserStoreLog(file_index, "=== BMP header parse start ===", file_index);
+/*
     if (size < 38)
     {
-        ParserStoreLog(texture_index, "BMP too small to parse", 
+        ParserStoreLog(file_index, "BMP too small to parse", 
                        static_cast<u32>(size));
-        return m_tex_valid[texture_index] = false;
+        return m_tex_valid[file_index] = false;
     }
-
+*/
     // read fields
     u32 fileSize    = data[2]  | (data[3]<<8)  | (data[4]<<16)  | (data[5]<<24);
     u32 dataOffset  = data[10] | (data[11]<<8) | (data[12]<<16) | (data[13]<<24);
@@ -229,21 +239,21 @@ if ((width  & 3) != 0 ||    // not multiple of 4
     (height & 3) != 0)
 {
   // fail alignment test
-  m_tex_valid[texture_index] = false;
-  ParserStoreLog(texture_index,
+  m_tex_valid[file_index] = false;
+  ParserStoreLog(file_index,
                  "BMP dim not 4-aligned",
                  width, height);
   return false;
 }
     // log raw header fields
-    ParserStoreLog(texture_index, "BMP fileSize/dataOffset  ", fileSize, dataOffset);
-    ParserStoreLog(texture_index, "BMP headerSize/planes    ", headerSize, planes);
-    ParserStoreLog(texture_index, "BMP bpp/compression      ", bpp, compression);
-    ParserStoreLog(texture_index, "BMP width/height         ", width, height);
-    ParserStoreLog(texture_index, "BMP imgSize              ", imgSize);
+    ParserStoreLog(file_index, "BMP fileSize/dataOffset  ", fileSize, dataOffset);
+    ParserStoreLog(file_index, "BMP headerSize/planes    ", headerSize, planes);
+    ParserStoreLog(file_index, "BMP bpp/compression      ", bpp, compression);
+    ParserStoreLog(file_index, "BMP width/height         ", width, height);
+    ParserStoreLog(file_index, "BMP imgSize              ", imgSize);
 
     // (optional) dump the first 38 bytes of the header
-    ParserStoreMsg(texture_index, data, 38, "BMP Header Hex Dump");
+    ParserStoreMsg(file_index, data, 38, "BMP Header Hex Dump");
 
     // validate
     bool ok = 
@@ -255,20 +265,20 @@ if ((width  & 3) != 0 ||    // not multiple of 4
       && compression== 0
       && width*height*3 == imgSize;
 
-    m_tex_valid[texture_index]       = ok;
-    m_tex_file_size[texture_index]   = fileSize;
-    m_tex_data_offset[texture_index] = dataOffset;
-    m_tex_width[texture_index]       = static_cast<u16>(width);
-    m_tex_height[texture_index]      = static_cast<u16>(height);
-    m_tex_image_size[texture_index]  = imgSize;
+    m_tex_valid[file_index]       = ok;
+    m_tex_file_size[file_index]   = fileSize;
+    m_tex_data_offset[file_index] = dataOffset;
+    m_tex_width[file_index]       = static_cast<u16>(width);
+    m_tex_height[file_index]      = static_cast<u16>(height);
+    m_tex_image_size[file_index]  = imgSize;
 
     // final status
-//  ParserStoreLog(texture_index,
+//  ParserStoreLog(file_index,
 //                 ok ? "BMP header VALID" : "BMP header FAILED",
 //                 STOREDEBUG_WHITESPACE,
 //                 STOREDEBUG_WHITESPACE);
 
-    ParserStoreLog(texture_index,
+    ParserStoreLog(file_index,
                    ok ? "BMP header VALID" : "BMP header FAILED");
 
     return ok;
@@ -277,89 +287,89 @@ if ((width  & 3) != 0 ||    // not multiple of 4
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              CALLBACK / HELPERS / UTILITY / WRAPPER
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-void            CH264Parser::ParserStoreLog              ( int video_index, const char* label, u32 value1, u32 value2 )
+void            CH264Parser::ParserStoreLog              ( int file_index, const char* label, u32 value1, u32 value2 )
 {
     // Always write the label
     for (const char* p = label; *p; ++p)
-        m_DebugCharArray[video_index][m_CharIndex[video_index]++] = *p;
+        m_DebugCharArray[file_index][m_CharIndex[file_index]++] = *p;
 
     // If both values are placeholders, stop here
     if (value1 == STOREDEBUG_WHITESPACE && value2 == STOREDEBUG_WHITESPACE) 
         {
-        m_DebugCharArray[video_index][m_CharIndex[video_index]++] = '\n';
-        m_DebugCharArray[video_index][m_CharIndex[video_index]]   = '\0';
+        m_DebugCharArray[file_index][m_CharIndex[file_index]++] = '\n';
+        m_DebugCharArray[file_index][m_CharIndex[file_index]]   = '\0';
         return;
         }
     // If value is valid, write it
     if (value1 != STOREDEBUG_WHITESPACE) 
         {
-        m_DebugCharArray[video_index][m_CharIndex[video_index]++] = ' ';
-        m_DebugCharArray[video_index][m_CharIndex[video_index]++] = '0';
-        m_DebugCharArray[video_index][m_CharIndex[video_index]++] = 'x';
+        m_DebugCharArray[file_index][m_CharIndex[file_index]++] = ' ';
+        m_DebugCharArray[file_index][m_CharIndex[file_index]++] = '0';
+        m_DebugCharArray[file_index][m_CharIndex[file_index]++] = 'x';
         for (int i = (sizeof(u32) * 2) - 1; i >= 0; --i)
             {
             char hex = "0123456789ABCDEF"[(value1 >> (i * 4)) & 0xF];
-            m_DebugCharArray[video_index][m_CharIndex[video_index]++] = hex;
+            m_DebugCharArray[file_index][m_CharIndex[file_index]++] = hex;
             }
         }
     // If second value is valid, write it
     if (value2 != STOREDEBUG_WHITESPACE) 
         {
-        m_DebugCharArray[video_index][m_CharIndex[video_index]++] = ' ';
-        m_DebugCharArray[video_index][m_CharIndex[video_index]++] = '0';
-        m_DebugCharArray[video_index][m_CharIndex[video_index]++] = 'x';
+        m_DebugCharArray[file_index][m_CharIndex[file_index]++] = ' ';
+        m_DebugCharArray[file_index][m_CharIndex[file_index]++] = '0';
+        m_DebugCharArray[file_index][m_CharIndex[file_index]++] = 'x';
         for (int i = (sizeof(u32) * 2) - 1; i >= 0; --i) 
             {
             char hex = "0123456789ABCDEF"[(value2 >> (i * 4)) & 0xF];
-            m_DebugCharArray[video_index][m_CharIndex[video_index]++] = hex;
+            m_DebugCharArray[file_index][m_CharIndex[file_index]++] = hex;
             }
         }
     // Terminate
-    m_DebugCharArray[video_index][m_CharIndex[video_index]++] = '\n';
-    m_DebugCharArray[video_index][m_CharIndex[video_index]]   = '\0';
+    m_DebugCharArray[file_index][m_CharIndex[file_index]++] = '\n';
+    m_DebugCharArray[file_index][m_CharIndex[file_index]]   = '\0';
 }
-void            CH264Parser::ParserStoreMsg              ( int video_index,const void* tx_msg, u32 total_size, const char* label )
+void            CH264Parser::ParserStoreMsg              ( int file_index,const void* tx_msg, u32 total_size, const char* label )
 {   
     // insert leading newline
-    m_DebugCharArray[video_index][m_CharIndex[video_index]] = '\n';
-    m_CharIndex[video_index]++;
+    m_DebugCharArray[file_index][m_CharIndex[file_index]] = '\n';
+    m_CharIndex[file_index]++;
     // copy label
     for (const char* p = label; *p; ++p) 
         {
-        m_DebugCharArray[video_index][m_CharIndex[video_index]] = *p;
-        m_CharIndex[video_index]++;
+        m_DebugCharArray[file_index][m_CharIndex[file_index]] = *p;
+        m_CharIndex[file_index]++;
         }
     // next line please
-    m_DebugCharArray[video_index][m_CharIndex[video_index]] = '\n';
-    m_CharIndex[video_index]++;
+    m_DebugCharArray[file_index][m_CharIndex[file_index]] = '\n';
+    m_CharIndex[file_index]++;
     // hex dump, 16 bytes per line
     const unsigned char* b = (const unsigned char*)tx_msg;
     for (u32 i = 0; i < total_size; ++i) 
         {
         if (i && (i % 16) == 0) 
             {
-            m_DebugCharArray[video_index][m_CharIndex[video_index]] = '\n';
-            m_CharIndex[video_index]++;
+            m_DebugCharArray[file_index][m_CharIndex[file_index]] = '\n';
+            m_CharIndex[file_index]++;
             }
         unsigned char v = b[i];
 
         char hi = "0123456789ABCDEF"[v >> 4];
-        m_DebugCharArray[video_index][m_CharIndex[video_index]] = hi;
-        m_CharIndex[video_index]++;
+        m_DebugCharArray[file_index][m_CharIndex[file_index]] = hi;
+        m_CharIndex[file_index]++;
 
         char lo = "0123456789ABCDEF"[v & 0xF];
-        m_DebugCharArray[video_index][m_CharIndex[video_index]] = lo;
-        m_CharIndex[video_index]++;
+        m_DebugCharArray[file_index][m_CharIndex[file_index]] = lo;
+        m_CharIndex[file_index]++;
 
-        m_DebugCharArray[video_index][m_CharIndex[video_index]] = ' ';
-        m_CharIndex[video_index]++;
+        m_DebugCharArray[file_index][m_CharIndex[file_index]] = ' ';
+        m_CharIndex[file_index]++;
         }
     // newline + terminator
-    m_DebugCharArray[video_index][m_CharIndex[video_index]] = '\n';
-    m_CharIndex[video_index]++;
-    m_DebugCharArray[video_index][m_CharIndex[video_index]] = '\n';
-    m_CharIndex[video_index]++;    
-    m_DebugCharArray[video_index][m_CharIndex[video_index]] = '\0';
+    m_DebugCharArray[file_index][m_CharIndex[file_index]] = '\n';
+    m_CharIndex[file_index]++;
+    m_DebugCharArray[file_index][m_CharIndex[file_index]] = '\n';
+    m_CharIndex[file_index]++;    
+    m_DebugCharArray[file_index][m_CharIndex[file_index]] = '\0';
 }
 size_t CH264Parser::FindNextStartCode(u8* data, size_t pos, size_t size) const
 {

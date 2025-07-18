@@ -76,7 +76,7 @@ extern          float                   opaque;
 
 //  Define file names on the sd card and usb stick
 extern  const   char                    *VID__LOG_NAMES                          [VID_SD+VID_USB];
-
+extern  const   char                    *BMP__LOG_NAMES                          [TEX_SD+TEX_USB];
 extern          char                   *SCANED_FILES_VSH                         [40];
 extern          char                   *SCANED_FILES_FSH                         [40];
 extern          char                   *SCANED_FILES_TEX                         [40];

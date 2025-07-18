@@ -3,6 +3,7 @@
 
 void            CKernel::display_LoadScreenTexVidShd( int mode)
 {
+    /*
                     const char* clearScreen = "\x1b[H\x1b[J";               // first we clear the screen
 
                     m_Screen.Write(clearScreen, strlen(clearScreen));
@@ -23,18 +24,14 @@ void            CKernel::display_LoadScreenTexVidShd( int mode)
                         break;
                         case 4:
                         m_Screen.Write("\n Load IMG Firmware Files    /", strlen("\n Load IMG Firmware Files    /"));
-                        break;                                                                        
+                        break;      
+                        default:
+                        break;                                                                  
                     }
-
-                    LED_circle_color()                                      // circle the led colors 
+    */
+                    LED_circle_color();                              // circle the led colors 
 
 }
-bool            CKernel::LoadScreenTexVid()
-{
-
-    
-}
-
 
 bool            CKernel::display_startup_screen(CUBE_STATE_T *state)
 {                   CString info;

@@ -51,10 +51,10 @@ bool            ParseInitialize         (       int     max_videos,
                                                 u16     max_height,
                                                 u8      max_profile,
                                                 u8      max_level);
-bool            ParseVideo              (       int     video_index,
+bool            ParseVideo              (       int     file_index,
                                                 char*   buffer_array[], 
                                                 size_t  size_array[]);
-bool            ParseBPM                (       int     texture_index,
+bool            ParseBPM                (       int     file_index,
                                                 char*   buffer_array[],
                                                 size_t  size_array[]);
 //----------------------------------------------------------------------------------------------------------------------------------------------------
