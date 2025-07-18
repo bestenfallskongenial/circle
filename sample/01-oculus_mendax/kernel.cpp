@@ -168,9 +168,12 @@ m_H264Decoder.MMALinitialize           (                                m_VCSMin
                     SCANED_FILES_VSH,  VSH_LOADED_BYTES, VSH_SD,
                     SCANED_FILES_FSH,  FSH_LOADED_BYTES, FSH_SD,
                     SCANED_FILES_TEX,  TEX_LOADED_BYTES, TEX_SD,
-                    SCANED_FILES_VID,  VID_LOADED_BYTES, VID_SD, false ))
-                    {
+                    SCANED_FILES_VID,  VID_LOADED_BYTES, VID_SD))
+                    {                   
                     gfx_init_v_buffer(&state);
+
+                    parser_bmp(TEX_LOADED_OLD,TEX_LOADED_NEW);
+                    parser_h264(VID_LOADED_OLD,VID_LOADED_NEW);
     
                     gfx_init_vshaders(&state, VSH_LOADED_OLD, VSH_LOADED_NEW);
                     gfx_init_fshaders(&state, FSH_LOADED_OLD, FSH_LOADED_NEW);
@@ -205,12 +208,15 @@ m_H264Decoder.MMALinitialize           (                                m_VCSMin
                     //  TEX_LOADED_OLD = 0;     // we need to reset the couter
                     //  TEX_LOADED_NEW = 0;     // that the brandlogo is removed
 
-                        if( filesystem_mount("umsd1-1", 
+                        if( filesystem_mount("umsd1-1",                                                 // 1. scan the filenames!
                             SCANED_FILES_VSH, VSH_LOADED_BYTES, VSH_USB,
                             SCANED_FILES_FSH, FSH_LOADED_BYTES, FSH_USB,
                             SCANED_FILES_TEX, TEX_LOADED_BYTES, TEX_USB, 
-                            SCANED_FILES_VID, VID_LOADED_BYTES, VID_USB, true))
+                            SCANED_FILES_VID, VID_LOADED_BYTES, VID_USB))
                             {
+                            parser_bmp(TEX_LOADED_OLD,TEX_LOADED_NEW);
+                            parser_h264(VID_LOADED_OLD,VID_LOADED_NEW);
+
                             gfx_init_fshaders(&state, FSH_LOADED_OLD, FSH_LOADED_NEW);
                             gfx_init_programs(&state, FSH_LOADED_OLD, FSH_LOADED_NEW);
                             gfx_init_uniforms(&state, FSH_LOADED_OLD, FSH_LOADED_NEW);

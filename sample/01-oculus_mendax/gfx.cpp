@@ -420,14 +420,11 @@ void            CKernel::gfx_init_uniforms          (   CUBE_STATE_T *state, int
 
 void            CKernel::gfx_init_textures          (   CUBE_STATE_T *state, int fromFile, int toFile)
 {
-                CString log_message;
-                parser_teture_bmp(TEX_LOADED_OLD, TEX_LOADED_NEW);
-                
                 int validTextureCount = 0;  // Counter for valid textures only
 
                 for (int i = fromFile; i < toFile; i++)
                     {
-                    if(TEX_FILE_STATUS[i] == true)
+                    if(m_H264Parser.m_tex_valid[i] == true)
                         {
                         glGenTextures(1, &state->gl_tex_id[validTextureCount]);  // Use counter instead of i
                         glBindTexture(GL_TEXTURE_2D, state->gl_tex_id[validTextureCount]);
@@ -437,13 +434,13 @@ void            CKernel::gfx_init_textures          (   CUBE_STATE_T *state, int
                         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
                         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
                     //  check();
-                        GLvoid* bitmapData = &m_bufferTexture[i][TEX_FILE_BM_OFFSET[i]];
+                        GLvoid* bitmapData = &m_bufferTexture[i][m_H264Parser.m_tex_data_offset[i]];
 
                         glTexImage2D(GL_TEXTURE_2D, 
                                    0, 
                                    GL_RGB, 
-                                   TEX_FILE_X_DIM[i],
-                                   TEX_FILE_Y_DIM[i], 
+                                   m_H264Parser.m_tex_width[i],
+                                   m_H264Parser.m_tex_height[i], 
                                    0, 
                                    GL_RGB, 
                                    GL_UNSIGNED_BYTE, 
@@ -455,27 +452,6 @@ void            CKernel::gfx_init_textures          (   CUBE_STATE_T *state, int
                         }
                     m_Watchdog.Start(TIMEOUT);       // new watchdog
                     }
-
-// !!! i need to move this out of the function again. its a hotfix, intent is to compose the bitmap section of the log file !!!
-
-                log_message.Format( "----------------------------------------------------------------\n"
-                                    "Tex# Status   Filesize Offset Dimension BMP-Size    Filename\n");
-                g_log_string.Append(log_message);
-                for( int i = 0;i < TEX_LOADED_NEW-1; ++i )
-                    {
-                    log_message.Format("%-2d   %-6s   %-8d 0x%-4x %-4dx%-4d %-8d    %s\n",
-                            i,
-                            (TEX_FILE_STATUS[i] ? "Valid" : "Failed"),
-                            TEX_FILE_SIZE[i], 
-                            TEX_FILE_BM_OFFSET[i],
-                            TEX_FILE_X_DIM[i],
-                            TEX_FILE_Y_DIM[i],
-                            TEX_FILE_BM_SIZE[i],
-                            SCANED_FILES_TEX[i]);
-                            
-                            g_log_string.Append(log_message);
-                    }
-// !!! here the function continues 
 
                 // Store the actual number of valid textures for later use
                 TEX_LOADED_NEW = validTextureCount;

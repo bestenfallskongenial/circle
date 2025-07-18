@@ -5,10 +5,7 @@ void            CKernel::parser_teture_bmp          (   int fromFile, int toFile
 {
                 CString log_message;
 
-//              log_message.Format("Tex# Status   Filesize Offset Dimension BMP-Size    Filename\n");
-//                                  Tex# Status   Size     Offset Dimension Filesize
-//              g_log_string.Append(log_message);
-                
+               
                 for (int i = fromFile; i < toFile; ++i)
                     {
                     if ( m_bufferTexture[i][0] == 'B' && m_bufferTexture[i][1] == 'M' &&
@@ -76,33 +73,17 @@ void            CKernel::parser_teture_bmp          (   int fromFile, int toFile
                                            (static_cast<uint8_t>(m_bufferTexture[i][36]) << 16) |
                                            (static_cast<uint8_t>(m_bufferTexture[i][37]) << 24);
                         }
-/*                      else
-                        {
-                        TEX_FILE_STATUS[i]    = false;
-                        TEX_FILE_SIZE[i]     = 0;
-                        TEX_FILE_BM_OFFSET[i] = 0;
-                        TEX_FILE_X_DIM[i]   = 0;
-                        TEX_FILE_Y_DIM[i]   = 0;
-                        TEX_FILE_BM_SIZE[i]   = 0;
-                        }   
-                    log_message.Format("%-2d   %-6s   %-8d 0x%-4x %-4dx%-4d %-8d    %s\n",
-                    i,
-                    (TEX_FILE_STATUS[i] ? "Valid" : "Failed"),
-                    TEX_FILE_SIZE[i], 
-                    TEX_FILE_BM_OFFSET[i],
-                    TEX_FILE_X_DIM[i],
-                    TEX_FILE_Y_DIM[i],
-                    TEX_FILE_BM_SIZE[i],
-                    SCANED_FILES_TEX[i]);
-                    
-                    g_log_string.Append(log_message);
-                    */
                     }
 }
-void CKernel::GenerateH264ParserInfo( int video_index)
+void CKernel::GenerateH264ParserInfo( int file_index)
 {
-        CString bufferParser = m_H264Parser.m_DebugCharArray[video_index];
-        filesystem_save_log_file( "emmc1-1", VID__LOG_NAMES[video_index], bufferParser);   
+        CString bufferParser = m_H264Parser.m_DebugCharArray[file_index];
+        filesystem_save_log_file( "emmc1-1", VID__LOG_NAMES[file_index], bufferParser);   
+}
+void CKernel::GenerateBmpParserInfo( int file_index)
+{
+        CString bufferParser = m_H264Parser.m_DebugCharArray[file_index];
+        filesystem_save_log_file( "emmc1-1", BMP__LOG_NAMES[file_index], bufferParser);   
 }
 
 void            CKernel::parser_debug               (int fromFile, int toFile)
@@ -114,6 +95,21 @@ void            CKernel::parser_debug               (int fromFile, int toFile)
         }
 }
 
+void            CKernel::parser_h264               (int fromFile, int toFile)
+{
+    for (int i = fromFile; i < toFile; i++) 
+        {
+                m_H264Parser.ParseVideo(i, m_bufferVideo, VID_LOADED_BYTES );
+                GenerateH264ParserInfo  (i);
+        }
+}
 
-
+void            CKernel::parser_bmp               (int fromFile, int toFile)
+{
+    for (int i = fromFile; i < toFile; i++) 
+        {
+                m_H264Parser.ParseBPM(i, m_bufferVideo, VID_LOADED_BYTES );
+                GenerateBmpParserInfo  (i);
+        }
+}
 

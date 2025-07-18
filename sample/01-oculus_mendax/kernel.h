@@ -262,13 +262,13 @@ struct CUBE_STATE_T
 	void			memory_clear_dma_buffer		(	char** buffers, char* rawBlock);
 
 	bool 			filesystem_open_file		(	const char *pTitle	);
-	unsigned 		filesystem_load_file		(	char *buffer, unsigned bufferSize, bool callback);		
+	unsigned 		filesystem_load_file		(	char *buffer, unsigned bufferSize, int mode);		
 	bool 			filesystem_close_file		();
 	int 			filesystem_process_files	(  	char* fileNameArray[], 
 													unsigned totalLoadedBytes[], 
 													char** bufferArray, 
                             						int maxFiles, int successfulLoaded, 
-													unsigned TEX_FILE_SIZE, bool callback	);
+													unsigned TEX_FILE_SIZE, int mode);
 	bool 			filesystem_save_log_file	(	const char* deviceName, const char* filename, const CString& str_to_save);
 	bool 			filesystem_update_USB		(	const char* deviceType);
 	bool 			filesystem_mount			(	const char* deviceName, 
@@ -279,8 +279,7 @@ struct CUBE_STATE_T
                               						char* textureFileNames[], 
 													unsigned tXtotalLoadedBytes[], int maxTextureFiles,
                                             		char* videoFileNames[]  , 
-													unsigned vItotalLoadedBytes[], int maxVideoFiles,     
-                                            		bool callback	);
+													unsigned vItotalLoadedBytes[], int maxVideoFiles);
 	bool			filesystem_IsValidFileType	(const char* pFileName, const char* extension);
 	unsigned		filesystem_ScanRootDir		(char** fileArray, const char* extension, unsigned maxFiles);
 	bool			filesystem_load_kernel		(const char* deviceName, const char* filename, unsigned bufferIndex);
@@ -315,8 +314,8 @@ public:
 	bool 			util_check_for_update		();
                  
 	void 			util_save_modes_file		();
-	void 			parser_teture_bmp			(	int fromFile, int toFile);	// simplify ?!
-	void 			parser_debug				(	int fromFile, int toFile);
+//  void 			parser_teture_bmp			(	int fromFile, int toFile);	// simplify ?!
+//	void 			parser_debug				(	int fromFile, int toFile);
 
 	void   			gfx_check					(	const char *file, unsigned line);
 	void			gfx_shader_log				(	GLint shader, int shaderIndex);
@@ -332,6 +331,7 @@ public:
 	void 			gfx_render_shader_b			(	CUBE_STATE_T *state);	
 
 	bool			display_startup_screen		(	CUBE_STATE_T *state);
+	void			display_LoadScreenTexVidShd ( int mode );
 	void 			display_debug				( 	CUBE_STATE_T *state, int level );					// display_debug menu 
 	void 			display_append_modes		(); // display_debug output
 	void 			display_print_log_file		();
@@ -346,7 +346,11 @@ public:
 //  void			menu_mode_assign_audio		();	
 //  void			debug						();
 
-	void 			GenerateH264ParserInfo		(	int     video_index );
+	void 			parser_h264					(int fromFile, int toFile);
+	void			parser_bmp					(int fromFile, int toFile);
+	void 			GenerateH264ParserInfo		(	int     file_index );
+	void 			GenerateBmpParserInfo		(	int     file_index );
+
 
 
 private:

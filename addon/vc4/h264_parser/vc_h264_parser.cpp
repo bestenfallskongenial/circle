@@ -197,21 +197,18 @@ bool CH264Parser::ParseVideo(    int     video_index, char*   buffer_array[], si
 
         return m_vid_is_valid[video_index];
 }
-bool CH264Parser::parser_texture_bmp(int texture_index,
-                                     char* buffer_array[],
-                                     size_t size_array[])
+bool CH264Parser::ParseBPM          (int texture_index, char* buffer_array[], size_t size_array[])
 {
     u8*    data = reinterpret_cast<u8*>(buffer_array[texture_index]);
     size_t size = size_array[texture_index];
 
     // — initialize log entry for this texture —
-    ParserStoreLog(texture_index, "=== BMP header parse start ===",
-                   STOREDEBUG_WHITESPACE, STOREDEBUG_WHITESPACE);
+    ParserStoreLog(texture_index, "=== BMP header parse start ===", texture_index);
 
     if (size < 38)
     {
         ParserStoreLog(texture_index, "BMP too small to parse", 
-                       static_cast<u32>(size), STOREDEBUG_WHITESPACE);
+                       static_cast<u32>(size));
         return m_tex_valid[texture_index] = false;
     }
 
@@ -226,12 +223,24 @@ bool CH264Parser::parser_texture_bmp(int texture_index,
     u32 height      = data[22] | (data[23]<<8) | (data[24]<<16) | (data[25]<<24);
     u32 imgSize     = data[34] | (data[35]<<8) | (data[36]<<16) | (data[37]<<24);
 
+
+    // after you've decoded width/height:
+if ((width  & 3) != 0 ||    // not multiple of 4
+    (height & 3) != 0)
+{
+  // fail alignment test
+  m_tex_valid[texture_index] = false;
+  ParserStoreLog(texture_index,
+                 "BMP dim not 4-aligned",
+                 width, height);
+  return false;
+}
     // log raw header fields
-    ParserStoreLog(texture_index, "BMP fileSize/dataOffset", fileSize, dataOffset);
-    ParserStoreLog(texture_index, "BMP headerSize/planes", headerSize, planes);
-    ParserStoreLog(texture_index, "BMP bpp/compression", bpp, compression);
-    ParserStoreLog(texture_index, "BMP width/height", width, height);
-    ParserStoreLog(texture_index, "BMP imgSize", imgSize, STOREDEBUG_WHITESPACE);
+    ParserStoreLog(texture_index, "BMP fileSize/dataOffset  ", fileSize, dataOffset);
+    ParserStoreLog(texture_index, "BMP headerSize/planes    ", headerSize, planes);
+    ParserStoreLog(texture_index, "BMP bpp/compression      ", bpp, compression);
+    ParserStoreLog(texture_index, "BMP width/height         ", width, height);
+    ParserStoreLog(texture_index, "BMP imgSize              ", imgSize);
 
     // (optional) dump the first 38 bytes of the header
     ParserStoreMsg(texture_index, data, 38, "BMP Header Hex Dump");
@@ -254,10 +263,13 @@ bool CH264Parser::parser_texture_bmp(int texture_index,
     m_tex_image_size[texture_index]  = imgSize;
 
     // final status
+//  ParserStoreLog(texture_index,
+//                 ok ? "BMP header VALID" : "BMP header FAILED",
+//                 STOREDEBUG_WHITESPACE,
+//                 STOREDEBUG_WHITESPACE);
+
     ParserStoreLog(texture_index,
-                   ok ? "BMP header VALID" : "BMP header FAILED",
-                   STOREDEBUG_WHITESPACE,
-                   STOREDEBUG_WHITESPACE);
+                   ok ? "BMP header VALID" : "BMP header FAILED");
 
     return ok;
 }

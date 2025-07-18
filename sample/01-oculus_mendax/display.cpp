@@ -1,6 +1,41 @@
 #include "kernel.h"
 #include "global.h"
 
+void            CKernel::display_LoadScreenTexVidShd( int mode)
+{
+                    const char* clearScreen = "\x1b[H\x1b[J";               // first we clear the screen
+
+                    m_Screen.Write(clearScreen, strlen(clearScreen));
+
+                    switch(mode)
+                    {
+                        case 0:
+                        m_Screen.Write("\n Load Vertex Shader Files   /", strlen("\n Load Vertex Shader Files   /"));
+                        break;
+                        case 1:
+                        m_Screen.Write("\n Load Fragment Shader Files /", strlen("\n Load Fragment Shader Files /"));
+                        break;
+                        case 2:
+                        m_Screen.Write("\n Load BMP Texture Files     /", strlen("\n Load BMP Texture Files     /"));
+                        break;
+                        case 3:
+                        m_Screen.Write("\n Load H264 Video Files      /", strlen("\n Load H264 Video Files      /"));
+                        break;
+                        case 4:
+                        m_Screen.Write("\n Load IMG Firmware Files    /", strlen("\n Load IMG Firmware Files    /"));
+                        break;                                                                        
+                    }
+
+                    LED_circle_color()                                      // circle the led colors 
+
+}
+bool            CKernel::LoadScreenTexVid()
+{
+
+    
+}
+
+
 bool            CKernel::display_startup_screen(CUBE_STATE_T *state)
 {                   CString info;
                     const char* clearScreen = "\x1b[H\x1b[J";

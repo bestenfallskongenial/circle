@@ -12,32 +12,35 @@ bool            CKernel::filesystem_open_file       (   const char *pTitle)		   
 }
 unsigned        CKernel::filesystem_load_file       (   char *buffer, 
                                                         unsigned bufferSize, 
-                                                        bool callback)
+                                                        int mode)
 {
                 unsigned totalBytesRead = 0;
                 unsigned bytesRead;
     
                 while (totalBytesRead < bufferSize)
                     {
+                    opaque = 0.5f;
                     unsigned currentChunkSize = (bufferSize - totalBytesRead < CHUNK_SIZE) ? 
                                                 (bufferSize - totalBytesRead) : CHUNK_SIZE;
                     bytesRead = m_pFileSystem->FileRead(hFile, buffer + totalBytesRead, currentChunkSize);
 
                     if (bytesRead == FS_ERROR)
                         {
+                        opaque = 1.0f;    
                         return 0;  // Read error
                         }
                     if (bytesRead == 0)
                         {
+                        opaque = 1.0f;    
                         return totalBytesRead;  // EOF reached, return total bytes read
                         }
                     totalBytesRead += bytesRead;
-                    if( callback)
-                        {
-                        LED_circle_color();    // function call here 
-                        }
+
+                        display_LoadScreenTexVidShd(mode);
+
                     m_Watchdog.Start(TIMEOUT);         // new watchdog    
                     }
+                opaque = 1.0f;    
                 return 0;  // Buffer full, EOF not reached - this is NOT a success - 0 is equal to false
 }
 bool            CKernel::filesystem_close_file      ()	                                                 // close file ( release hFile handle ) 
@@ -54,13 +57,13 @@ int             CKernel::filesystem_process_files   (   char* fileNameArray[],
                                                         int maxFiles, 
                                                         int successfulLoaded, 
                                                         unsigned fileSize, 
-                                                        bool callback)
+                                                        int mode)
 {
                 for (int i = 0; i < maxFiles; ++i) 
                     {
                     if (filesystem_open_file(fileNameArray[i]))
                         {
-                        unsigned bytesRead = filesystem_load_file(bufferArray[successfulLoaded], fileSize, callback);
+                        unsigned bytesRead = filesystem_load_file(bufferArray[successfulLoaded], fileSize, mode);
                         if (bytesRead)
                             {
                             totalLoadedBytes[successfulLoaded] = bytesRead;
@@ -83,8 +86,7 @@ bool            CKernel::filesystem_mount           (   const char* deviceName,
                                                         int maxTextureFiles,
                                                         char* videoFileNames[]  , 
                                                         unsigned vItotalLoadedBytes[], 
-                                                        int maxVideoFiles,     
-                                                        bool callback)
+                                                        int maxVideoFiles)
 {
                 bool success = false;
                 
@@ -100,16 +102,16 @@ bool            CKernel::filesystem_mount           (   const char* deviceName,
                     scanned_vid = filesystem_ScanRootDir(videoFileNames,   "264", maxVideoFiles);
 
                     VSH_LOADED_NEW = filesystem_process_files(  vshaderFileNames, vStotalLoadedBytes, m_bufferVshader, 
-                                                                scanned_vsh, VSH_LOADED_NEW, VSH_SIZE, callback);  // The file system was mounted successfully                 
+                                                                scanned_vsh, VSH_LOADED_NEW, VSH_SIZE, 0);  // The file system was mounted successfully                 
 
                     FSH_LOADED_NEW = filesystem_process_files(  fshaderFileNames, fStotalLoadedBytes, m_bufferFshader, 
-                                                                scanned_fsh, FSH_LOADED_NEW, FSH_SIZE, callback);                               
+                                                                scanned_fsh, FSH_LOADED_NEW, FSH_SIZE, 1);                               
 
                     TEX_LOADED_NEW = filesystem_process_files(  textureFileNames, tXtotalLoadedBytes, m_bufferTexture, 
-                                                                scanned_tex, TEX_LOADED_NEW, TEX_SIZE, callback);                                   
+                                                                scanned_tex, TEX_LOADED_NEW, TEX_SIZE, 2);                                   
                   
                     VID_LOADED_NEW = filesystem_process_files(  videoFileNames  , vItotalLoadedBytes, m_bufferVideo  , 
-                                                                scanned_vid  , VID_LOADED_NEW , VID_SIZE  , callback);                                
+                                                                scanned_vid  , VID_LOADED_NEW , VID_SIZE  , 3);                                
 
                     m_pFileSystem->UnMount();
                     success = true;
@@ -228,7 +230,8 @@ bool            CKernel::filesystem_load_kernel     (   const char* deviceName,
                 {
                     if (filesystem_open_file(filename))
                     {
-                        loaded_bytes_kernel[bufferIndex] = filesystem_load_file(m_bufferKernel[bufferIndex], KERNEL_SIZE, true);
+
+                        loaded_bytes_kernel[bufferIndex] = filesystem_load_file(m_bufferKernel[bufferIndex], KERNEL_SIZE, 4);
                         if (loaded_bytes_kernel[bufferIndex] > 0)
                         {
                             filesystem_close_file();

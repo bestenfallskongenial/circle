@@ -54,7 +54,7 @@ bool            ParseInitialize         (       int     max_videos,
 bool            ParseVideo              (       int     video_index,
                                                 char*   buffer_array[], 
                                                 size_t  size_array[]);
-bool            parser_texture_bmp      (       int     texture_index,
+bool            ParseBPM                (       int     texture_index,
                                                 char*   buffer_array[],
                                                 size_t  size_array[]);
 //----------------------------------------------------------------------------------------------------------------------------------------------------
