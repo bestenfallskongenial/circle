@@ -19,13 +19,18 @@ CH264Parser::~CH264Parser(void)
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              USER API
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-bool    CH264Parser::ParseInitialize (  int         max_videos,  
+bool    CH264Parser::ParseInitialize (  int         max_textures,
+                                        u32         max_tex_size,
+                                        int         max_videos,  
                                         int         max_frames,
                                         u16         max_width,
                                         u16         max_height,
                                         u8          max_profile,
                                         u8          max_level)
 {
+    m_max_textures = max_textures;
+    m_max_tex_size = max_tex_size;
+
     m_max_videos  = max_videos;
     m_max_frames  = max_frames;
     m_max_width   = max_width;

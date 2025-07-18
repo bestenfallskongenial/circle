@@ -45,7 +45,9 @@ public:
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              USER API
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-bool            ParseInitialize         (       int     max_videos,  
+bool            ParseInitialize         (       int     max_textures,
+                                                int     max_tex_size,
+                                                int     max_videos,  
                                                 int     max_frames,
                                                 u16     max_width,
                                                 u16     max_height,
@@ -80,9 +82,11 @@ u32             ReadExpGolomb                               (   u8*             
 //              CALLBACK / HELPERS / UTILITY / WRAPPER
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 public: 
+        int     m_max_textures;
+        u32     m_max_tex_size;
+
         int     m_max_videos;
         int     m_max_frames;
-        u32     m_max_tex_size;
         u16     m_max_width;
         u16     m_max_height;
         u8      m_max_profile;

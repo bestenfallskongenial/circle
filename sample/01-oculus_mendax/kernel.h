@@ -45,7 +45,7 @@
 #include <vc4/vchi/vchi.h>       // For VCHI_CONNECTION_T
 /*
 // Add the external function declaration
-extern "C" void vc_host_get_vchi_state(VCHI_INSTANCE_T *initialise_instance, VCHI_CONNECTION_T **connection);
+
 */
 #include <vc4/vc_sm/vc_sm_class.h>							// VideoCore Shared Memory							
 #include <vc4/h264_decoder/vc_h264_decoder.h>					// VideoCore H.264 Decoder for fiexd Resolution Annex B Raw H.264 Videos
@@ -70,7 +70,7 @@ extern "C" void vc_host_get_vchi_state(VCHI_INSTANCE_T *initialise_instance, VCH
 #define 		VIDEO_WIDTH				640
 #define			VIDEO_HEIGHT			480
 #define 		MAX_FRAMES 				2048
-#define 		VIDEO_PROFILE			66		// Baseline
+#define 		BASELINE_PROFILE		66		// Baseline
 
 #define			TIMEOUT					10
 #define 		LOGLEVEL				4	// 0: only panic 1: also errors 2: also warnings 3: also notices 4: also debug output (default))
@@ -181,12 +181,7 @@ extern "C" void vc_host_get_vchi_state(VCHI_INSTANCE_T *initialise_instance, VCH
 #define         SD_LINE1		      	GPIO_TO_SD_LINE (LED_PIN)			// dont touch!
 #define         SD_LINE_TO_MASK(line)	(1 << (line))						// dont touch!
 #define         SD_LINES_MASK		 	(  SD_LINE_TO_MASK (SD_LINE1) )		// dont touch!
-/*
-#define         GPIO_TO_SD_LINE(pin)	((pin) - 8)
-#define         SD_LINE1		GPIO_TO_SD_LINE (LED_PIN)
-#define         SD_LINE_TO_MASK(line)	(1 << (line))
-#define         SD_LINES_MASK		(  SD_LINE_TO_MASK (SD_LINE1) )
-*/
+
 #define         CHANNEL			    	7		                    // 7 ( for mcp3008 )
 #define         VREF			 		5.0f	                    // Reference voltage 5 Volt
 #define         SPI_MASTER_DEVICE	 	0		                    // 0
@@ -314,8 +309,6 @@ public:
 	bool 			util_check_for_update		();
                  
 	void 			util_save_modes_file		();
-//  void 			parser_teture_bmp			(	int fromFile, int toFile);	// simplify ?!
-//	void 			parser_debug				(	int fromFile, int toFile);
 
 	void   			gfx_check					(	const char *file, unsigned line);
 	void			gfx_shader_log				(	GLint shader, int shaderIndex);

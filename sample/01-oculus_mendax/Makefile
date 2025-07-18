@@ -4,7 +4,7 @@
 
 CIRCLEHOME = ../..
 
-OBJS	= 	main.o kernel.o display.o filesystem.o gfx.o global.o io.o LED.o memory.o menu.o parser.o util.o 
+OBJS	= 	main.o kernel.o display.o filesystem.o gfx.o global.o io.o LED.o memory.o menu.o util.o 
 
 LIBS	= 	$(CIRCLEHOME)/lib/usb/libusb.a \
 	  		$(CIRCLEHOME)/lib/input/libinput.a \

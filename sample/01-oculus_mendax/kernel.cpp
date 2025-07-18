@@ -12,8 +12,6 @@
 
 #define LOG_NAME "VCSM"
 
-// #include <vc4/vc_sm_h264_decoder_parser/vc_sm.h>
-
                 static  const char              FromKernel[] = "kernel";
                 
                 CKernel::CKernel (void)
@@ -146,9 +144,7 @@ m_H264Decoder.MMALinitialize           (                                m_VCSMin
 
                 CString test;
                 CString test1;
-            //  bool m_USBhasLoadOnes = false;
 
-            //  m_resetFlag = false;
                 util_prep_parameters();
                 
                 const char* cursoroff = "\x1b[?25l";
@@ -159,9 +155,15 @@ m_H264Decoder.MMALinitialize           (                                m_VCSMin
                     return ShutdownReboot;      // If the update was successful, proceed with reboot
                     }
 
-            m_H264Parser.ParseInitialize( 8, 2048, 640, 480, 66, 41);            
-            //  m_USBHCI.UpdatePlugAndPlay();
-    
+            m_H264Parser.ParseInitialize(   8, 
+                                            TEX_SIZE, 
+                                            8, 
+                                            MAX_FRAMES, 
+                                            VIDEO_WIDTH, 
+                                            VIDEO_HEIGHT, 
+                                            BASELINE_PROFILE, 
+                                            41 );            
+
                 m_Timer.MsDelay(500);
 
                 if( filesystem_mount("emmc1-1", 
