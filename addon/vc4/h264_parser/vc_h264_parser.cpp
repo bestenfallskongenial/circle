@@ -219,14 +219,7 @@ bool CH264Parser::ParseBPM          (int file_index, char* buffer_array[], size_
 
     // — initialize log entry for this texture —
     ParserStoreLog(file_index, "=== BMP header parse start ===", file_index);
-/*
-    if (size < 38)
-    {
-        ParserStoreLog(file_index, "BMP too small to parse", 
-                       static_cast<u32>(size));
-        return m_tex_valid[file_index] = false;
-    }
-*/
+
     // read fields
     u32 fileSize    = data[2]  | (data[3]<<8)  | (data[4]<<16)  | (data[5]<<24);
     u32 dataOffset  = data[10] | (data[11]<<8) | (data[12]<<16) | (data[13]<<24);
@@ -238,18 +231,19 @@ bool CH264Parser::ParseBPM          (int file_index, char* buffer_array[], size_
     u32 height      = data[22] | (data[23]<<8) | (data[24]<<16) | (data[25]<<24);
     u32 imgSize     = data[34] | (data[35]<<8) | (data[36]<<16) | (data[37]<<24);
 
+    if (size != fileSize)
+        {
+        ParserStoreLog(file_index, "Filesize missmatch", file_index);
+        // return m_tex_valid[file_index] = false;
+        }
 
-    // after you've decoded width/height:
-if ((width  & 3) != 0 ||    // not multiple of 4
-    (height & 3) != 0)
-{
-  // fail alignment test
-  m_tex_valid[file_index] = false;
-  ParserStoreLog(file_index,
-                 "BMP dim not 4-aligned",
-                 width, height);
-  return false;
-}
+    if ((width  & 3) != 0 || (height & 3) != 0)  // not multiple of 4
+        {
+        // fail alignment test
+        m_tex_valid[file_index] = false;
+        ParserStoreLog(file_index, "BMP dim not 4-aligned", width, height);
+        return false;
+        }
     // log raw header fields
     ParserStoreLog(file_index, "BMP fileSize/dataOffset  ", fileSize, dataOffset);
     ParserStoreLog(file_index, "BMP headerSize/planes    ", headerSize, planes);
@@ -276,12 +270,6 @@ if ((width  & 3) != 0 ||    // not multiple of 4
     m_tex_width[file_index]       = static_cast<u16>(width);
     m_tex_height[file_index]      = static_cast<u16>(height);
     m_tex_image_size[file_index]  = imgSize;
-
-    // final status
-//  ParserStoreLog(file_index,
-//                 ok ? "BMP header VALID" : "BMP header FAILED",
-//                 STOREDEBUG_WHITESPACE,
-//                 STOREDEBUG_WHITESPACE);
 
     ParserStoreLog(file_index,
                    ok ? "BMP header VALID" : "BMP header FAILED");
