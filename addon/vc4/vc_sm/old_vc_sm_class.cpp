@@ -61,7 +61,7 @@ bool            CVCSharedMemory::VCSMInitialize     (   )
 }
 bool            CVCSharedMemory::VCSMimportMemory   (   void* buffer, 
                                                         size_t size, 
-                                                        int slot )
+                                                        u32 *handle_out )
 {
                 vc_sm_msg_hdr_t tx_hdr = {};                                                   // 1. Compose header
                 tx_hdr.type = VC_SM_MSG_TYPE_IMPORT;
@@ -104,7 +104,7 @@ bool            CVCSharedMemory::VCSMimportMemory   (   void* buffer,
                     return false;
                     }
 
-                m_vc_handle[slot] = result->res_handle;
+                *handle_out = result->res_handle;
             #ifdef VCSMLOG    
                 VCSMstoreLog ( "\nRX - Buffer Address", (u32)buffer);
                 VCSMstoreLog ( "RX - Buffer Size   ", size);
@@ -112,14 +112,14 @@ bool            CVCSharedMemory::VCSMimportMemory   (   void* buffer,
             #endif // VCSMLOG
                 return true;
 }
-bool            CVCSharedMemory::VCSMLockMemory(int slot)
+bool            CVCSharedMemory::VCSMLockMemory(u32 handle, u32* vc_address_out)
 {
                 vc_sm_msg_hdr_t tx_hdr = {};                     // 1. Compose header
                 tx_hdr.type = VC_SM_MSG_TYPE_LOCK;
                 tx_hdr.trans_id = VCSMnextId(m_TransactionId);
 
                 vc_sm_lock_unlock_t lock_msg = {};               // 2. Compose body
-                lock_msg.res_handle = m_vc_handle[slot];
+                lock_msg.res_handle = handle;
                 lock_msg.res_mem = 0;
 
                 u8 tx_msg[sizeof(tx_hdr) + sizeof(lock_msg)];    // 3. Compose full message buffer
@@ -147,18 +147,20 @@ bool            CVCSharedMemory::VCSMLockMemory(int slot)
                 VCSMstoreLog("LOCK - VC Handle", result->res_handle);
                 VCSMstoreLog("LOCK - VC Address", result->res_mem);
             #endif // VCSMLOG
-
-                m_vc_pointer[slot] = result->res_mem;
+                if (vc_address_out)
+                    {
+                    *vc_address_out = result->res_mem;
+                    }
                 return true;
 }
 
-bool            CVCSharedMemory::VCSMFreeMemory     (   int slot )
+bool            CVCSharedMemory::VCSMFreeMemory     (   u32 handle )
 {
                 vc_sm_msg_hdr_t tx_hdr = {};                                                   // 1. Compose header
                 tx_hdr.type                         = VC_SM_MSG_TYPE_FREE;
                 tx_hdr.trans_id                     = VCSMnextId(m_TransactionId);
                 vc_sm_free_t free_msg = {};                                                 // 2. Compose body
-                free_msg.res_handle                 = m_vc_handle[slot];
+                free_msg.res_handle                 = handle;
                 free_msg.res_mem                    = 0;
                 u8 tx_msg[sizeof(tx_hdr) + sizeof(free_msg)];                                     // 3. Compose full message buffer
                 memcpy(tx_msg, &tx_hdr, sizeof(tx_hdr));
@@ -180,13 +182,7 @@ bool            CVCSharedMemory::VCSMFreeMemory     (   int slot )
 
                 const vc_sm_result_t *result = reinterpret_cast<const vc_sm_result_t *>(rx_msg);
 
-                if (result->success == 0)
-                    {
-                    m_vc_handle[slot]  = 0;
-                    m_vc_pointer[slot] = 0;
-                    return true;
-                    }
-                return false;
+                return (result->success == 0);
 }
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              CALLBACK / HELPERS / UTILITY / WRAPPER

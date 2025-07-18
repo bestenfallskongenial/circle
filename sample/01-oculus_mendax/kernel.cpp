@@ -99,12 +99,12 @@ boolean         CKernel::Initialize (void)
 
                 if (bOK) {  m_Timer.MsDelay(200);
                             m_SharedMemory.VCSMInitialize   (); 
-                            m_SharedMemory.VCSMimportMemory (m_videoBlockBase, m_videoBlockSize, &m_VCSMinputHandle);
-                            m_SharedMemory.VCSMLockMemory   (m_VCSMinputHandle, &m_VCSMinputPtr);
-                            m_SharedMemory.VCSMimportMemory (m_frameBlockBaseA, m_frameBlockSizeA, &m_VCSMoutputHandleA);
-                            m_SharedMemory.VCSMLockMemory   (m_VCSMoutputHandleA, &m_VCSMoutputPtrA);
-                            m_SharedMemory.VCSMimportMemory (m_frameBlockBaseB, m_frameBlockSizeB, &m_VCSMoutputHandleB);
-                            m_SharedMemory.VCSMLockMemory   (m_VCSMoutputHandleB, &m_VCSMoutputPtrB);
+                            m_SharedMemory.VCSMimportMemory (m_videoBlockBase, m_videoBlockSize, 0);
+                            m_SharedMemory.VCSMLockMemory   (0);
+                            m_SharedMemory.VCSMimportMemory (m_frameBlockBaseA, m_frameBlockSizeA, 1);
+                            m_SharedMemory.VCSMLockMemory   (1);
+                            m_SharedMemory.VCSMimportMemory (m_frameBlockBaseB, m_frameBlockSizeB, 2);
+                            m_SharedMemory.VCSMLockMemory   (2);
                          } 
 /*                                                            
                 if (bOK) { m_H264Decoder.MMALinitialize           (     m_VCSMinputHandle,         // my input buffer handle from smem
@@ -137,8 +137,8 @@ m_H264Decoder.MMALinitialize           (                                m_VCSMin
                                                                         m_VCSMoutputHandleA,       // my output buffer handle a from smem 
                                                                         m_VCSMoutputHandleB,       // my output buffer handle b from smem
                                                                         m_frameBlockSizeA,          // my allocated output buffer size
-                                                                        640,            // 
-                                                                        480, 
+                                                                        VIDEO_WIDTH,            // 
+                                                                        VIDEO_HEIGHT, 
                                                                         state.display,      // <-- add this
                                                                         state.context);       // <-- and this)
 
@@ -155,7 +155,7 @@ m_H264Decoder.MMALinitialize           (                                m_VCSMin
                     return ShutdownReboot;      // If the update was successful, proceed with reboot
                     }
 
-            m_H264Parser.ParseInitialize(   8, 
+            m_H264Parser.ParseInitialize(   8,                      // 
                                             TEX_SIZE, 
                                             8, 
                                             MAX_FRAMES, 
@@ -184,8 +184,6 @@ m_H264Decoder.MMALinitialize           (                                m_VCSMin
                     gfx_init_textures(&state, TEX_LOADED_OLD, TEX_LOADED_NEW);
 
                     m_Watchdog.Start(TIMEOUT);
-
-                //  parser_debug(VID_LOADED_OLD, VID_LOADED_NEW); 
 
                     m_Timer.MsDelay(100);
  

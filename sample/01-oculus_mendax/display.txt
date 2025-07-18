@@ -1,3 +1,0 @@
-this file contains the menu to display, 
-
-guess i will replace it with a texture overlay menu using texture atlases

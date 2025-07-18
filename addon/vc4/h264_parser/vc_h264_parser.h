@@ -46,7 +46,7 @@ public:
 //              USER API
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 bool            ParseInitialize         (       int     max_textures,
-                                                int     max_tex_size,
+                                                u32     max_tex_size,
                                                 int     max_videos,  
                                                 int     max_frames,
                                                 u16     max_width,

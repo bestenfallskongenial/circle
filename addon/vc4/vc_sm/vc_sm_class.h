@@ -21,14 +21,13 @@ public:
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              USER API
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-        bool    VCSMInitialize      (   );                                          // initialise the vc4 shared memory service
+        bool    VCSMInitialize      (   );                                              // initialise the vc4 shared memory service
 
-        bool    VCSMimportMemory    (   void* buffer,                               // buffer: Memory allocated with HEAP_DMA30
-                                        size_t size,                                // size: Size of buffer in bytes
-                                        u32 * handle_out);                          // handle_out: Receives VideoCore handle on success   
-        bool    VCSMLockMemory      (   u32 handle, 
-                                        u32* vc_address_out);                       // lock buffer and get VPU address
-        bool    VCSMFreeMemory      (   u32 handle);                                // handle of the buffer to deregister
+        bool    VCSMimportMemory    (   void* buffer,                                   // buffer: Memory allocated with HEAP_DMA30
+                                        size_t size,                                    // size: Size of buffer in bytes
+                                        int slot);                                      // handle_out: Receives VideoCore handle on success   
+        bool    VCSMLockMemory      (   int slot);                                      // lock buffer and get VPU address
+        bool    VCSMFreeMemory      (   int slot);                                      // handle of the buffer to deregister
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              CALLBACK / HELPERS / UTILITY / WRAPPER
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -61,6 +60,9 @@ static  void    VCSMcallback        (   void *callback_param,                   
         VCHI_SERVICE_HANDLE_T           m_ServiceHandle;
         u32                             m_TransactionId;
 public:
+        u32                             m_vc_handle[MAX_BUFFER] = {0};
+        u32                             m_vc_pointer[MAX_BUFFER] = {0};
+
         u32                             m_CharIndex = 0;
         char                            m_DebugCharArray[MAX_DEBUG_FILE_LENGTH] = { 0 }; // log_buffer is exposed for external use ( like storing ) 
 };

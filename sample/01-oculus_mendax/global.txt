@@ -1,1 +1,0 @@
-i will move as much as possible back to kernel.h as public/private members
