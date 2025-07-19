@@ -68,11 +68,11 @@ bool            CH264Decoder::MMALinitialize           (    u32 InBufferHandle, 
 
                 m_eglDisplay                        = eglDisplay;
                 m_eglContext                        = eglContext;
-
+            MMALstoreLog ( "\n------------------------------------------------");     
                 GetVCHIstate                ();
                 MMALinitEvents              ();
                 MMALopenService             ();
-
+            MALstoreLog ( "\n------------------------------------------------");     
                 MMALcreateComponent         ();
                 MMALenableComponent         ();
 

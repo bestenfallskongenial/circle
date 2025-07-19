@@ -1,0 +1,624 @@
+ Yes, understood.
+
+The `mmal.h` file and related headers describe a **canonical initialization and message sequence** for MMAL → VCHI → VCHIQ → VPU operation. The *tutorial/example* in `mmal.h` outlines this order in a procedural way. Here's the distilled, step-by-step protocol flow with exact message types and struct roles:
+ 
+### 🔧 MMAL Component Setup Example (Decoding H.264)
+
+#### Step 0. Initialize VCHI and VCHIQ
+
+Done via:
+ 
+bcm_host_init(); // indirectly calls vchi_initialise, vchi_connect, etc.
+  
+### Step 1. Create Decoder Component
+
+**Msg:** `MMAL_MSG_TYPE_COMPONENT_CREATE`
+**Struct:** `mmal_msg_component_create`
+You send `"vc.ril.video_decode"` or `"ril.video_decode"` as the component name.
+
+Response: `mmal_msg_component_create_reply` → contains:
+
+* `component_handle`
+* `input_num`, `output_num`, `clock_num`
+
+This handle will be used in every subsequent message.
+ 
+### Step 2. Get Port Info
+
+**Msg:** `MMAL_MSG_TYPE_PORT_INFO_GET`
+**Struct:** `mmal_msg_port_info_get`
+For each port (usually input\[0] and output\[0]):
+
+* send component handle
+* type (`MMAL_PORT_TYPE_INPUT` or `OUTPUT`)
+* index (usually 0)
+
+Response: `mmal_msg_port_info_get_reply` → provides:
+
+* `port_handle`
+* `mmal_port` struct (buffer size/min/recommended, format info)
+* `mmal_es_format`, `es`, and possible `extradata`
+
+You must **cache this info** per port to construct later `SET` calls.
+ 
+### Step 3. Set Input Port Format
+
+**Msg:** `MMAL_MSG_TYPE_PORT_INFO_SET`
+**Struct:** `mmal_msg_port_info_set`
+You set fields in:
+
+* `mmal_es_format` → `.type = VIDEO`, `.encoding = MMAL_ENCODING_H264`
+* `es.video.width/height/framerate`, `.par`, `.color_space`
+* optional: `extradata`, e.g. for SPS/PPS
+
+You **must also set**:
+
+* `.buffer_num`, `.buffer_size` in `mmal_port`
+
+Response: `mmal_msg_port_info_set_reply` → must succeed.
+ 
+### Step 4. Enable Component
+
+**Msg:** `MMAL_MSG_TYPE_COMPONENT_ENABLE`
+**Struct:** `mmal_msg_component_enable`
+→ just send the component handle.
+ 
+### Step 5. Enable Ports
+
+**Msg:** `MMAL_MSG_TYPE_PORT_ACTION` with `MMAL_MSG_PORT_ACTION_TYPE_ENABLE`
+**Struct:** `mmal_msg_port_action_port`
+→ fill in component handle, port handle, `action = ENABLE`
+
+Set `userdata` if needed (used by the host driver for callbacks).
+ 
+### Step 6. Submit Buffers to Input/Output Ports
+
+**Msg:** `MMAL_MSG_TYPE_BUFFER_FROM_HOST`
+**Struct:** `mmal_msg_buffer_from_host`
+
+Fields:
+
+* `drvbuf.component_handle`, `drvbuf.port_handle`
+* `buffer_header.data = vc_handle or ptr`
+* `length`, `flags` (`FRAME_START|END`, `KEYFRAME`, `CONFIG`, etc)
+* `pts`, `dts`, `offset`
+
+Output port: just set buffer size and submit empty.
+
+VPU sends decoded frames via:
+**Msg:** `MMAL_MSG_TYPE_BUFFER_TO_HOST`
+And possibly:
+**Msg:** `MMAL_MSG_TYPE_EVENT_TO_HOST` (e.g. `FORMAT_CHANGED`)
+ 
+### Step 7. Handle Events / Responses
+
+Check `cmd` in returned `buffer_header`.
+Special:
+
+* `MMAL_EVENT_FORMAT_CHANGED` = update output port format (also triggers event)
+
+Use `vchiq_bulk_receive()` to get data if `length > short_data limit`.
+ 
+This is the complete minimum wire protocol required to:
+
+* setup MMAL video decoder
+* configure input
+* start decoding
+* receive output
+
+Let me know if you want the raw message memory layouts, opcode IDs, or matching Circle/C baremetal stubs.
+
+Understood. You're asking how to properly *use* the data retrieved via `PORT_INFO_GET`, particularly:
+
+* How to populate the `PORT_INFO_SET` message using `mmal_msg_port_info_get_reply`
+* How to merge **runtime config** (e.g. resolution, encoding) with the existing port state
+* What the `extradata` field is and whether/how you must provide it
+
+And whether the "message order" is described formally in `mmal.h`.
+ 
+## ✅ 1. **How to use `mmal_msg_port_info_get_reply`**
+
+You extract this structure from `PORT_INFO_GET` and then:
+
+* **Copy it**
+* **Modify only**:
+
+  * `port.buffer_num`
+  * `port.buffer_size`
+  * `format.type`
+  * `format.encoding`
+  * `es.video.*` if `format.type == VIDEO`
+  * `format.extradata` and `extradata_size` if applicable (see below)
+
+This *modified copy* becomes the payload for `PORT_INFO_SET`.
+
+📌 Example:
+ 
+mmal_msg_port_info_set tx_set = {};
+memcpy(&tx_set.port, &PortInfoReply.port, sizeof(mmal_port));
+memcpy(&tx_set.format, &PortInfoReply.format, sizeof(mmal_es_format));
+memcpy(&tx_set.es, &PortInfoReply.es, sizeof(mmal_es_specific_format));
+memcpy(&tx_set.extradata, PortInfoReply.extradata, PortInfoReply.format.extradata_size);
+
+// modify:
+tx_set.format.encoding = MMAL_ENCODING_H264;
+tx_set.format.type = MMAL_ES_TYPE_VIDEO;
+tx_set.es.video.width = 1280;
+tx_set.es.video.height = 720;
+tx_set.es.video.frame_rate.num = 25;
+tx_set.es.video.frame_rate.den = 1;
+tx_set.port.buffer_num = 6;
+tx_set.port.buffer_size = 128 * 1024;
+  
+## ✅ 2. **What is `format.extradata`**
+
+`format.extradata` is codec-specific side data — usually:
+
+* For H.264: SPS + PPS NALs in AVCDecoderConfigurationRecord form (MP4-style), **not** raw Annex B
+* For MPEG-4: Visual Object Sequence Header (VOSH), etc.
+
+These are **optional**, but:
+
+* If supplied, the decoder can *immediately* configure the output port
+* If omitted, decoder must *wait* until it parses enough input frames to emit a `FORMAT_CHANGED` event
+
+In MMAL, if you call:
+ 
+mmal_format_extradata_alloc(format, size);
+ 
+it allocates a zeroed buffer to hold `size` bytes of extradata.
+
+You populate it from external data (e.g. parser output), then commit the format.
+
+### If you're feeding Annex B NALs:
+
+> Leave `extradata` blank, just set `format.flags |= MMAL_ES_FORMAT_FLAG_FRAMED`.
+> Then the decoder will wait until a full frame is parsed, then emit a format change event.
+ 
+## ✅ 3. **How to merge with system configuration**
+
+After `PORT_INFO_GET`, override **only the relevant fields**:
+
+| What you want to change | Where to write it                           |
+| ----------------------- | ------------------------------------------- |
+| Encoding (e.g. H.264)   | `format.encoding`                           |
+| Width/Height            | `es.video.width`, `es.video.height`         |
+| FPS                     | `es.video.frame_rate.num / den`             |
+| Buffer count            | `port.buffer_num`                           |
+| Buffer size             | `port.buffer_size`                          |
+| Optional extradata      | `format.extradata`, `format.extradata_size` |
+ 
+## ✅ 4. **Is this "message order" described in `mmal.h`?**
+
+Partially.
+
+The example at the end of `mmal.h` outlines this sequence:
+ 
+mmal_component_create("vc.ril.video_decode", &decoder);
+// set decoder->input[0]->format
+mmal_port_format_commit(decoder->input[0])
+// send data
+// read decoded frames from output
+ 
+But **the actual message protocol** (`MMAL_MSG_TYPE_PORT_INFO_GET`, etc.) is **not documented in `mmal.h`**. That’s userland. The actual message IDs and structs are only defined in kernel space:
+
+* `mmal-msg.h`
+* `mmal-vchiq.h`
+* `mmal-msg-port.h`
+* etc.
+
+So the **full message exchange sequence** (GET → SET → ENABLE → SUBMIT BUFFER) is *implied*, but only explicitly documented in the kernel headers and `mmal-vchiq.c` source.
+ 
+### ✅ Final Answer Summary
+
+* Yes, you must use the data from `PORT_INFO_GET`, merge in your system config (resolution, codec), and send it via `PORT_INFO_SET`
+* `extradata` is optional codec configuration, used mostly for non-Annex B formats (e.g. MP4 demux)
+* The correct message ordering is *not* fully described in `mmal.h`, only userland API logic is. Real message sequencing is reverse-engineered from kernel space
+
+Want a full minimal `PORT_INFO_SET` builder based on your `MMALgetPortInfo()` result?
+
+Understood. Here's the **exact minimal message order** required to set up and run a MMAL video decoder using VCHI/VCHIQ.
+ 
+## ✅ MMAL-to-VPU Message Order (Bare-Metal / No Callbacks)
+
+| Step | Message Type                           | Description                                                       |
+| ---- | -------------------------------------- | ----------------------------------------------------------------- |
+| 1    | `MMAL_MSG_TYPE_GET_VERSION`            | Optional sanity check.                                            |
+| 2    | `MMAL_MSG_TYPE_COMPONENT_CREATE`       | Create decoder component `"vc.ril.video_decode"`                  |
+| 3    | `MMAL_MSG_TYPE_PORT_INFO_GET`          | Query input port (type = INPUT, index = 0)                        |
+| 4    | `MMAL_MSG_TYPE_PORT_INFO_GET`          | Query output port (type = OUTPUT, index = 0)                      |
+| 5    | \[Your code parses both `*_get_reply`] | Store: `port_handle`, `format`, `es`, buffer size hints           |
+| 6    | `MMAL_MSG_TYPE_PORT_INFO_SET`          | Send modified input port format, buffer sizes, possibly extradata |
+| 7    | `MMAL_MSG_TYPE_COMPONENT_ENABLE`       | Enable the decoder component                                      |
+| 8    | `MMAL_MSG_TYPE_PORT_ACTION (ENABLE)`   | Enable input port                                                 |
+| 9    | `MMAL_MSG_TYPE_PORT_ACTION (ENABLE)`   | Enable output port (with `cmd = ENABLE`)                          |
+| 10   | `MMAL_MSG_TYPE_BUFFER_FROM_HOST`       | Submit input buffers with encoded H.264 Annex B NALs              |
+| 11   | `MMAL_MSG_TYPE_BUFFER_FROM_HOST`       | Submit empty output buffers                                       |
+| 12   | ← `MMAL_MSG_TYPE_BUFFER_TO_HOST`       | Receive decoded frames                                            |
+| 13   | ← `MMAL_MSG_TYPE_EVENT_TO_HOST`        | Format changed event (contains updated output format)             |
+
+Repeat steps 10–13 during decoding.
+ 
+## 🧠 What to do with `mmal_msg_port_info_get_reply`
+
+You get two replies: one for input\[0], one for output\[0]. Process like this:
+
+### For `input[0]`:
+
+* Save `port_handle`
+* Overwrite:
+
+  * `format.encoding = MMAL_ENCODING_H264`
+  * `format.type = MMAL_ES_TYPE_VIDEO`
+  * `es.video.width / height`
+  * `es.video.frame_rate.num/den`
+* Set `buffer_num`, `buffer_size` per your needs
+* Optionally set `extradata` if required
+* Send via `PORT_INFO_SET`
+
+### For `output[0]`:
+
+* Save `port_handle` for buffer submission
+* Do **not** change anything unless you have full format information
+* If input format lacks extradata, decoder will send `FORMAT_CHANGED` later
+ 
+This is the canonical, minimal sequence you must implement in bare-metal. No messages can be skipped.
+
+By “**store buffer size hints**” I mean:
+
+→ Store (for later use) the following **read-only values** returned in `mmal_msg_port_info_get_reply.port`:
+
+* `buffer_num_min`
+* `buffer_size_min`
+* `buffer_alignment_min`
+* `buffer_num_recommended`
+* `buffer_size_recommended`
+
+These are **informational** values provided by the VPU to guide you in setting:
+
+* `buffer_num`
+* `buffer_size`
+
+which are **writeable** fields you must fill before calling `PORT_INFO_SET`.
+
+### ⛏ Example
+
+You receive from `PORT_INFO_GET`:
+ 
+buffer_num_min          = 2
+buffer_size_min         = 65536
+buffer_alignment_min    = 16
+buffer_num_recommended  = 6
+buffer_size_recommended = 131072
+ 
+→ You choose:
+ 
+buffer_num  = 6;           // match recommended
+buffer_size = 131072;      // match recommended
+ 
+⚠️ But **you must align** the buffer memory to `buffer_alignment_min` and ensure `buffer_size >= buffer_size_min`.
+
+### Summary
+
+These "hints" are:
+
+* **Read-only guidance**
+* **Used to choose correct values** for buffer count/size
+* **Not sent back as-is**, but must inform how you build your `PORT_INFO_SET` payload
+
+You must store them so you can apply correct logic in steps 6–9.
+
+Understood. I will answer with zero ambiguity:
+ 
+## ✅ What to store from `PORT_INFO_GET`
+
+From `mmal_msg_port_info_get_reply`, **you must store** the following:
+
+### Always:
+
+* `port_handle` → needed for all further port actions
+* `mmal_port port` → to copy into `PORT_INFO_SET.port`
+* `mmal_es_format format` → to copy and modify
+* `mmal_es_specific_format es` → contains `.video.*` (resolution etc.)
+* `extradata` and `extradata_size` → optional, depends on codec
+
+These fields are used directly to build the `PORT_INFO_SET` message.
+ 
+## ✅ What to do after `GET`
+
+You copy the full reply, then **modify only what’s necessary**:
+
+* `format.encoding = MMAL_ENCODING_H264`
+* `format.type = MMAL_ES_TYPE_VIDEO`
+* `es.video.width = 1920`, `height = 1080`, `framerate = …`
+* `port.buffer_num = your value` (≥ min)
+* `port.buffer_size = your value` (≥ min)
+
+Then send this via `PORT_INFO_SET`.
+ 
+## ❗ What is `extradata`?
+
+**`extradata` is codec-specific configuration** (optional).
+
+### In H.264:
+
+* It holds the **AVCDecoderConfigurationRecord** (SPS/PPS packed in MP4 format)
+* MMAL expects this *only* if you're not using raw Annex B NALs
+
+### If you are sending raw Annex B (start codes `00 00 01`):
+
+> ❌ You do **not** need to fill `extradata`.
+> ✅ Just leave `format.extradata_size = 0`
+> ✅ Do not touch `extradata[]`
+> The decoder will emit `FORMAT_CHANGED` when it parses the SPS/PPS from stream.
+ 
+### Summary:
+
+You **store the entire `*_get_reply`**, use it as a template, modify fields, and send `PORT_INFO_SET`.
+
+You only need to modify or provide `extradata` if you are *not* sending Annex B.
+
+You are doing it correctly. Nothing more must be stored.
+
+Clear, complete, no renaming, no omissions:
+ 
+## ✅ After `MMAL_MSG_TYPE_PORT_INFO_GET`
+
+You receive `mmal_msg_port_info_get_reply`. You must extract and store:
+
+### 🔹 1. `port_handle`
+
+Required for future messages (buffer submission, enabling, etc.)
+
+### 🔹 2. `port` (type: `mmal_port`)
+
+Used directly in `PORT_INFO_SET`.
+You must later modify:
+
+* `buffer_num`
+* `buffer_size`
+
+### 🔹 3. `format` (type: `mmal_es_format`)
+
+Used in `PORT_INFO_SET`.
+You must later modify:
+
+* `encoding`
+* `type`
+* `bitrate` (optional)
+* `flags` (optional)
+
+### 🔹 4. `es` (type: `mmal_es_specific_format`)
+
+Used in `PORT_INFO_SET`.
+You must later modify:
+
+* `video.width`
+* `video.height`
+* `video.frame_rate.num`
+* `video.frame_rate.den`
+* `video.color_space` (optional)
+
+### 🔹 5. `extradata_size`, `extradata[128]`
+
+Used in `PORT_INFO_SET`.
+You:
+
+* leave it as-is if unused
+* or overwrite it with codec config (e.g. AVCDecoderConfigurationRecord) if needed
+ 
+## ✅ You must also extract from `port`:
+
+### 🔸 `buffer_num_min`, `buffer_size_min`
+
+→ Required minimums.
+
+### 🔸 `buffer_num_recommended`, `buffer_size_recommended`
+
+→ Safe defaults.
+
+### 🔸 `buffer_alignment_min`
+
+→ Required alignment for DMA/VPU memory.
+
+These are not sent back in `PORT_INFO_SET` — you use them to pick legal values for:
+
+* `port.buffer_num`
+* `port.buffer_size`
+ 
+## ✅ Final Build of `PORT_INFO_SET`
+
+You fill `mmal_msg_port_info_set` as follows:
+ 
+msg.component_handle = component_handle;
+msg.port_type        = same as reply;
+msg.port_index       = same as reply;
+
+msg.port             = [copy from GET, but modify:]
+    .buffer_num      = chosen value ≥ min
+    .buffer_size     = chosen value ≥ min, aligned
+
+msg.format           = [copy from GET, but modify:]
+    .encoding        = MMAL_ENCODING_H264
+    .type            = MMAL_ES_TYPE_VIDEO
+    .bitrate         = (optional)
+    .flags           = (optional)
+
+msg.es               = [copy from GET, but modify:]
+    .video.width     = your value
+    .video.height    = your value
+    .video.frame_rate.num / den = your value
+
+msg.format.extradata_size = 0 or actual value
+msg.extradata[0..N]        = zero or codec config
+ 
+This is exactly what you do with the `*_get_reply`.
+
+Let me know if you want the `PORT_INFO_SET` payload binary layout next.
+
+It means this:
+ 
+### `msg.port` refers to this field in the `mmal_msg_port_info_set` struct:
+ 
+struct mmal_msg_port_info_set {
+    ...
+    struct mmal_port port;         // <-- THIS FIELD
+    ...
+};
+ 
+You **populate it** like this:
+
+#### ✅ Step-by-step:
+ 
+mmal_msg_port_info_set msg = {};
+memcpy(&msg.port, &port_info_reply.port, sizeof(mmal_port));  // COPY EVERYTHING FROM GET
+ 
+Then:
+ 
+msg.port.buffer_num  = your_chosen_value;   // ≥ port.buffer_num_min
+msg.port.buffer_size = your_chosen_value;   // ≥ port.buffer_size_min, aligned
+ 
+So “**copy from GET, but modify**” means:
+
+* Start by copying the entire `port` field from `mmal_msg_port_info_get_reply`
+* Then *change* only the two fields that are allowed and required to be written:
+
+  * `buffer_num`
+  * `buffer_size`
+
+Everything else stays untouched.
+ 
+### 🔒 All other `mmal_port` fields must be passed through unchanged.
+
+This is mandatory for the VPU to accept your `PORT_INFO_SET`.
+
+Complete. No omissions. Precise.
+ 
+## ✅ What to do with `mmal_msg_port_info_get_reply` (after `PORT_INFO_GET`)
+
+You must build a `mmal_msg_port_info_set` message.
+Here is exactly how each field in the `*_set` message is populated:
+ 
+### 🔹 `component_handle`
+ 
+msg.component_handle = port_info_reply.component_handle;
+  
+### 🔹 `port_type`
+ 
+msg.port_type = port_info_reply.port_type;
+  
+### 🔹 `port_index`
+ 
+msg.port_index = port_info_reply.port_index;
+  
+### 🔹 `port` (type: `mmal_port`)
+ 
+memcpy(&msg.port, &port_info_reply.port, sizeof(mmal_port));
+ 
+Then modify:
+ 
+msg.port.buffer_num  = your_value;    // ≥ port.buffer_num_min
+msg.port.buffer_size = your_value;    // ≥ port.buffer_size_min
+ 
+⚠️ Do **not modify** any other `msg.port` fields.
+ 
+### 🔹 `format` (type: `mmal_es_format`)
+ 
+memcpy(&msg.format, &port_info_reply.format, sizeof(mmal_es_format));
+ 
+Then modify:
+ 
+msg.format.encoding          = MMAL_ENCODING_H264;
+msg.format.type              = MMAL_ES_TYPE_VIDEO;
+msg.format.bitrate           = optional;
+msg.format.flags             = optional;
+msg.format.extradata_size    = 0 or actual extradata size;
+  
+### 🔹 `es` (type: `mmal_es_specific_format`)
+ 
+memcpy(&msg.es, &port_info_reply.es, sizeof(mmal_es_specific_format));
+ 
+Then modify:
+ 
+msg.es.video.width               = your_value;
+msg.es.video.height              = your_value;
+msg.es.video.frame_rate.num      = your_value;
+msg.es.video.frame_rate.den      = your_value;
+msg.es.video.color_space         = optional;
+msg.es.video.par.num             = optional;
+msg.es.video.par.den             = optional;
+  
+### 🔹 `extradata` (128-byte array)
+
+If using extradata (e.g. AVCDecoderConfigurationRecord):
+ 
+memcpy(&msg.extradata[0], your_data, msg.format.extradata_size);
+ 
+If not:
+ 
+msg.format.extradata_size = 0;
+// msg.extradata is ignored
+ 
+## ✅ What is `extradata` in MMAL?
+
+### Field:
+ 
+u32 extradata_size;
+u8  extradata[128];
+ 
+Defined inside `mmal_es_format`.
+Used in both `PORT_INFO_GET_REPLY` and `PORT_INFO_SET`.
+ 
+## 🎯 Purpose
+
+To carry **codec-specific initialization data** — configuration that the decoder needs *before* it can decode correctly.
+ 
+## 🧠 You **send it** (host → VPU)
+
+It is optional.
+If provided, you include it in the `PORT_INFO_SET` message for the **input port**.
+ 
+## 🎥 For H.264 (your case):
+
+`extradata` typically contains:
+
+* The **AVCDecoderConfigurationRecord**, which wraps:
+
+  * SPS (Sequence Parameter Set)
+  * PPS (Picture Parameter Set)
+  * in MP4-style format (NOT Annex B)
+
+This is the same data you’d find in `.mp4`, `.mov`, or `.mkv` tracks before any actual video frame.
+ 
+## ❌ You do **not** receive `extradata` from the VPU
+
+→ You either:
+
+* Provide it yourself (if you extracted it from a container like MP4), **or**
+* Leave `extradata_size = 0` if feeding raw Annex B stream (NALs with `00 00 01` headers)
+ 
+## ✅ If using Annex B:
+
+Set:
+ 
+format.extradata_size = 0;
+ 
+→ Decoder will extract SPS/PPS from the stream and send you a `FORMAT_CHANGED` event later.
+ 
+## ✅ If using AVC config (MP4-style):
+
+Set:
+ 
+format.extradata_size = N;
+memcpy(format.extradata, sps_pps_block, N);
+ 
+→ Decoder initializes immediately, no `FORMAT_CHANGED` needed.
+ 
+## Final:
+
+* `extradata` = *you send it*
+* Contains codec config like SPS/PPS
+* Required only if **not** using Annex B
+* For Annex B: **skip it**, set size to `0`
+
+
