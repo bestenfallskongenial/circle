@@ -99,6 +99,7 @@ public:
                                                                                         // Indexed by [video_index][frame_index]
         size_t  m_framelenght[MAX_VIDEOS][MAX_FRAMES];                                  // Length (in bytes) of each parsed IDR frame
                                                                                         // Indexed by [video_index][frame_index]    
+        size_t  m_idr_offset[MAX_VIDEOS];
         int     m_frame_count[MAX_VIDEOS];                                              // Number of IDR frames found for this video stream
         // ---------------- Extradata (SPS+PPS) per stream --------------------------------------------------------------------------------------------------------------------
         u8      m_extradata[MAX_VIDEOS][MMAL_FORMAT_EXTRADATA_MAX_SIZE];                // Raw Annex-B extradata buffer containing SPS+PPS for each video stream

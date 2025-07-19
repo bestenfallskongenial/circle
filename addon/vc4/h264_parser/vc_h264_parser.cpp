@@ -72,6 +72,7 @@ bool CH264Parser::ParseVideo(    int     file_index, char*   buffer_array[], siz
 
     size_t sps_off = 0, pps_off = 0;                                                                                // SPS/PPS offsets for extradata
     size_t sps_len = 0, pps_len = 0;
+    size_t last_sps_pos = 0;  
     bool found_sps = false;
     bool found_pps = false;
     
@@ -157,19 +158,25 @@ bool CH264Parser::ParseVideo(    int     file_index, char*   buffer_array[], siz
         size_t sc_len = (data[pos + 2] == 1) ? 3 : 4;
         u8 nal_type = data[pos + sc_len] & 0x1F;
 
+        if (nal_type == NAL_TYPE_SPS)                                                                               // record SPS position
+            {
+            last_sps_pos = pos;
+            }
+
         if (nal_type == NAL_TYPE_IDR) 
             {
-            m_frame_address[file_index][frame_idx] = (void*)(data + pos);                                          // save pointer + length
+            m_frame_address[file_index][frame_idx] = (void*)(data + last_sps_pos);                                  // store SPS addr
             size_t next_pos = FindNextStartCode(data, pos + sc_len, size);
             if (next_pos < size)
                 {
-                m_framelenght[file_index][frame_idx] = next_pos - pos;
+                m_framelenght[file_index][frame_idx] = next_pos - last_sps_pos;                                     // SPS→IDR-end length
                 }
             else
                 {
-                m_framelenght[file_index][frame_idx] = size - pos;
-                }    
-            ParserStoreLog(file_index,"IDR frame addr/len", (u32)m_frame_address[file_index][frame_idx], (u32)m_framelenght[file_index][frame_idx]);// log IDR frame pointer + length
+                m_framelenght[file_index][frame_idx] = size - last_sps_pos;
+                }
+            m_idr_offset[file_index] = pos - last_sps_pos;                                                          // SPS→IDR offset
+            ParserStoreLog(file_index,"SPS+PPS+IDR addr/len", (u32)m_frame_address[file_index][frame_idx], (u32)m_framelenght[file_index][frame_idx]);
             frame_idx++;
             pos = next_pos;
             }
@@ -178,9 +185,12 @@ bool CH264Parser::ParseVideo(    int     file_index, char*   buffer_array[], siz
             pos = FindNextStartCode(data, pos + sc_len, size);
             }
         }
+
     m_frame_count[file_index] = frame_idx;
 
     ParserStoreLog(file_index,"\nParsed Frames           ",frame_idx);
+    ParserStoreLog(file_index,"\nParsed IDR-Offset       ",m_idr_offset[file_index]);
+    
     // Check resolution
     if (m_video_width[file_index]  != m_max_width || m_video_height[file_index] != m_max_height)
         {
