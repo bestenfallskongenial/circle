@@ -60,9 +60,18 @@ bool            ParseBPM                (       int     file_index,
 //              CALLBACK / HELPERS / UTILITY / WRAPPER
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 private:
+/*
         void    ParserStoreLog                              (   int video_index,const char* label, 
                                                                 u32 value1 = STOREDEBUG_WHITESPACE, 
                                                                 u32 value2 = STOREDEBUG_WHITESPACE);
+
+*/
+        void ParserStoreLog( int file_index,
+                             const char* label,
+                             u32  value1 = STOREDEBUG_WHITESPACE,
+                             u32  value2 = STOREDEBUG_WHITESPACE,
+                             u32  value3 = STOREDEBUG_WHITESPACE,          // NEW
+                             u32  value4 = STOREDEBUG_WHITESPACE );        // NEW
         void    ParserStoreMsg                              (   int video_index,const void* tx_msg, u32 total_size, const char* label);
 size_t          FindNextStartCode                           (   u8*             data, 
                                                                 size_t          pos, 
@@ -118,4 +127,16 @@ public:
         u32     m_tex_image_size[MAX_TEXTURES];                                         // decoded image-data byte count (width×height×3)
 };
 
+/*
+
+Setup buffer (first and only time):
+
+ptr = m_frame_address[file_index][0];        // points to the SPS start-code
+len = m_framelenght[file_index][0];          // spans SPS → IDR-end
+Each buffer in the normal decode loop:
+
+ptr = m_frame_address[file_index][i] + m_idr_offset[video_index];   // jump to IDR start
+len = m_framelenght[file_index][i]  - m_idr_offset[video_index];    // IDR-only length
+
+*/
 #endif // _vc_h264_parser_h

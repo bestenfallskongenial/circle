@@ -49,9 +49,11 @@ static  void    MMALcallBack                                (   void *callback_p
         bool    GetVCHIstate                                (   );
         bool    MMALinitEvents                              (   );
      // void    MMALstoreLog                                (   const char* label, u32 value);
-        void    MMALstoreLog                                (   const char* label, 
-                                                                u32 value1 = STOREDEBUG_WHITESPACE, 
-                                                                u32 value2 = STOREDEBUG_WHITESPACE);
+        void    MMALstoreLog                                (   const char* label,
+                                                                u32  value1 = STOREDEBUG_WHITESPACE,
+                                                                u32  value2 = STOREDEBUG_WHITESPACE,
+                                                                u32  value3 = STOREDEBUG_WHITESPACE,          // NEW
+                                                                u32  value4 = STOREDEBUG_WHITESPACE );        // NEW
         void    MMALstoreMsg                                (   const void* tx_msg, u32 total_size, const char* label);
         bool    MMALsendAndWait                             (   const void *tx_msg, 
                                                                 size_t msg_size, 

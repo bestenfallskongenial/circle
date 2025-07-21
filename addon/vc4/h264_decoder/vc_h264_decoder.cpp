@@ -72,7 +72,7 @@ bool            CH264Decoder::MMALinitialize           (    u32 InBufferHandle, 
                 GetVCHIstate                ();
                 MMALinitEvents              ();
                 MMALopenService             ();
-            MALstoreLog ( "\n------------------------------------------------");     
+            MMALstoreLog ( "\n------------------------------------------------");     
                 MMALcreateComponent         ();
                 MMALenableComponent         ();
 
@@ -200,20 +200,28 @@ bool            CH264Decoder::MMALinitEvents            (   )
                 MMALstoreLog ( "\nVCOS Event Init Success!  ", (u32)&m_VCOSevent);                    
                 return true;    
 }
-void            CH264Decoder::MMALstoreLog              (   const char* label, u32 value1, u32 value2)
+void CH264Decoder::MMALstoreLog( const char* label,
+                                 u32 value1,
+                                 u32 value2,
+                                 u32 value3,
+                                 u32 value4 )
 {
-    // Always write the label
+    /* always write the label */
     for (const char* p = label; *p; ++p)
         m_DebugCharArray[m_CharIndex++] = *p;
 
-    // If both values are placeholders, stop here
-    if (value1 == STOREDEBUG_WHITESPACE && value2 == STOREDEBUG_WHITESPACE) {
+    /* if all values are placeholders, finish */
+    if ( value1 == STOREDEBUG_WHITESPACE &&
+         value2 == STOREDEBUG_WHITESPACE &&
+         value3 == STOREDEBUG_WHITESPACE &&
+         value4 == STOREDEBUG_WHITESPACE )
+    {
         m_DebugCharArray[m_CharIndex++] = '\n';
         m_DebugCharArray[m_CharIndex]   = '\0';
         return;
     }
 
-    // If value is valid, write it
+    /* write first value if valid */
     if (value1 != STOREDEBUG_WHITESPACE) {
         m_DebugCharArray[m_CharIndex++] = ' ';
         m_DebugCharArray[m_CharIndex++] = '0';
@@ -224,7 +232,7 @@ void            CH264Decoder::MMALstoreLog              (   const char* label, u
         }
     }
 
-    // If second value is valid, write it
+    /* write second value if valid */
     if (value2 != STOREDEBUG_WHITESPACE) {
         m_DebugCharArray[m_CharIndex++] = ' ';
         m_DebugCharArray[m_CharIndex++] = '0';
@@ -235,7 +243,29 @@ void            CH264Decoder::MMALstoreLog              (   const char* label, u
         }
     }
 
-    // Terminate
+    /* write third value if valid */
+    if (value3 != STOREDEBUG_WHITESPACE) {
+        m_DebugCharArray[m_CharIndex++] = ' ';
+        m_DebugCharArray[m_CharIndex++] = '0';
+        m_DebugCharArray[m_CharIndex++] = 'x';
+        for (int i = (sizeof(u32) * 2) - 1; i >= 0; --i) {
+            char hex = "0123456789ABCDEF"[(value3 >> (i * 4)) & 0xF];
+            m_DebugCharArray[m_CharIndex++] = hex;
+        }
+    }
+
+    /* write fourth value if valid */
+    if (value4 != STOREDEBUG_WHITESPACE) {
+        m_DebugCharArray[m_CharIndex++] = ' ';
+        m_DebugCharArray[m_CharIndex++] = '0';
+        m_DebugCharArray[m_CharIndex++] = 'x';
+        for (int i = (sizeof(u32) * 2) - 1; i >= 0; --i) {
+            char hex = "0123456789ABCDEF"[(value4 >> (i * 4)) & 0xF];
+            m_DebugCharArray[m_CharIndex++] = hex;
+        }
+    }
+
+    /* terminate line */
     m_DebugCharArray[m_CharIndex++] = '\n';
     m_DebugCharArray[m_CharIndex]   = '\0';
 }

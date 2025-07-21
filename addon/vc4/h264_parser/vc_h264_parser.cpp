@@ -290,44 +290,73 @@ bool CH264Parser::ParseBPM          (int file_index, char* buffer_array[], size_
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              CALLBACK / HELPERS / UTILITY / WRAPPER
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-void            CH264Parser::ParserStoreLog              ( int file_index, const char* label, u32 value1, u32 value2 )
+void CH264Parser::ParserStoreLog(  int file_index,
+                                 const char* label,
+                                 u32 value1,
+                                 u32 value2,
+                                 u32 value3,
+                                 u32 value4 )
 {
-    // Always write the label
+    /* always write the label */
     for (const char* p = label; *p; ++p)
         m_DebugCharArray[file_index][m_CharIndex[file_index]++] = *p;
 
-    // If both values are placeholders, stop here
-    if (value1 == STOREDEBUG_WHITESPACE && value2 == STOREDEBUG_WHITESPACE) 
-        {
+    /* if all values are placeholders, finish */
+    if ( value1 == STOREDEBUG_WHITESPACE &&
+         value2 == STOREDEBUG_WHITESPACE &&
+         value3 == STOREDEBUG_WHITESPACE &&
+         value4 == STOREDEBUG_WHITESPACE )
+    {
         m_DebugCharArray[file_index][m_CharIndex[file_index]++] = '\n';
         m_DebugCharArray[file_index][m_CharIndex[file_index]]   = '\0';
         return;
-        }
-    // If value is valid, write it
-    if (value1 != STOREDEBUG_WHITESPACE) 
-        {
+    }
+
+    /* write first value if valid */
+    if (value1 != STOREDEBUG_WHITESPACE) {
         m_DebugCharArray[file_index][m_CharIndex[file_index]++] = ' ';
         m_DebugCharArray[file_index][m_CharIndex[file_index]++] = '0';
         m_DebugCharArray[file_index][m_CharIndex[file_index]++] = 'x';
-        for (int i = (sizeof(u32) * 2) - 1; i >= 0; --i)
-            {
+        for (int i = (sizeof(u32) * 2) - 1; i >= 0; --i) {
             char hex = "0123456789ABCDEF"[(value1 >> (i * 4)) & 0xF];
             m_DebugCharArray[file_index][m_CharIndex[file_index]++] = hex;
-            }
         }
-    // If second value is valid, write it
-    if (value2 != STOREDEBUG_WHITESPACE) 
-        {
+    }
+
+    /* write second value if valid */
+    if (value2 != STOREDEBUG_WHITESPACE) {
         m_DebugCharArray[file_index][m_CharIndex[file_index]++] = ' ';
         m_DebugCharArray[file_index][m_CharIndex[file_index]++] = '0';
         m_DebugCharArray[file_index][m_CharIndex[file_index]++] = 'x';
-        for (int i = (sizeof(u32) * 2) - 1; i >= 0; --i) 
-            {
+        for (int i = (sizeof(u32) * 2) - 1; i >= 0; --i) {
             char hex = "0123456789ABCDEF"[(value2 >> (i * 4)) & 0xF];
             m_DebugCharArray[file_index][m_CharIndex[file_index]++] = hex;
-            }
         }
-    // Terminate
+    }
+
+    /* write third value if valid */
+    if (value3 != STOREDEBUG_WHITESPACE) {
+        m_DebugCharArray[file_index][m_CharIndex[file_index]++] = ' ';
+        m_DebugCharArray[file_index][m_CharIndex[file_index]++] = '0';
+        m_DebugCharArray[file_index][m_CharIndex[file_index]++] = 'x';
+        for (int i = (sizeof(u32) * 2) - 1; i >= 0; --i) {
+            char hex = "0123456789ABCDEF"[(value3 >> (i * 4)) & 0xF];
+            m_DebugCharArray[file_index][m_CharIndex[file_index]++] = hex;
+        }
+    }
+
+    /* write fourth value if valid */
+    if (value4 != STOREDEBUG_WHITESPACE) {
+        m_DebugCharArray[file_index][m_CharIndex[file_index]++] = ' ';
+        m_DebugCharArray[file_index][m_CharIndex[file_index]++] = '0';
+        m_DebugCharArray[file_index][m_CharIndex[file_index]++] = 'x';
+        for (int i = (sizeof(u32) * 2) - 1; i >= 0; --i) {
+            char hex = "0123456789ABCDEF"[(value4 >> (i * 4)) & 0xF];
+            m_DebugCharArray[file_index][m_CharIndex[file_index]++] = hex;
+        }
+    }
+
+    /* terminate line */
     m_DebugCharArray[file_index][m_CharIndex[file_index]++] = '\n';
     m_DebugCharArray[file_index][m_CharIndex[file_index]]   = '\0';
 }
