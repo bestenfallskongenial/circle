@@ -42,47 +42,45 @@ public:
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              USER API
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-bool            ParseInitialize         (       int     max_textures,
-                                                u32     max_tex_size,
-                                                int     max_videos,  
-                                                int     max_frames,
-                                                u16     max_width,
-                                                u16     max_height,
-                                                u8      max_profile,
-                                                u8      max_level);
-bool            ParseVideo              (       int     file_index,
-                                                char*   buffer_array[], 
-                                                size_t  size_array[]);
-bool            ParseBPM                (       int     file_index,
-                                                char*   buffer_array[],
-                                                size_t  size_array[]);
+bool            ParseInitialize                         (       int             max_textures,
+                                                                u32             max_tex_size,
+                                                                int             max_videos,  
+                                                                int             max_frames,
+                                                                u16             max_width,
+                                                                u16             max_height,
+                                                                u8              max_profile,
+                                                                u8              max_level);
+bool            ParseVideoAuto                          (       int             file_index, char* buffer_array[], size_t size_array[]);                                                
+bool            ParseAnnexB                             (       int             file_index, char* buffer_array[], size_t size_array[]);
+bool            ParseMP4                                (       int             file_index, char* buffer_array[], size_t size_array[]); // works also for .mov?!
+bool            ParseBPM                                (       int             file_index, char* buffer_array[], size_t size_array[]);
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              CALLBACK / HELPERS / UTILITY / WRAPPER
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 private:
-/*
-        void    ParserStoreLog                              (   int video_index,const char* label, 
-                                                                u32 value1 = STOREDEBUG_WHITESPACE, 
-                                                                u32 value2 = STOREDEBUG_WHITESPACE);
-
-*/
-        void ParserStoreLog( int file_index,
-                             const char* label,
-                             u32  value1 = STOREDEBUG_WHITESPACE,
-                             u32  value2 = STOREDEBUG_WHITESPACE,
-                             u32  value3 = STOREDEBUG_WHITESPACE,          // NEW
-                             u32  value4 = STOREDEBUG_WHITESPACE );        // NEW
-        void    ParserStoreMsg                              (   int video_index,const void* tx_msg, u32 total_size, const char* label);
+        void    ParserStoreLog                          (       int             file_index,
+                                                                const char*     label,
+                                                                u32             value1 = STOREDEBUG_WHITESPACE,
+                                                                u32             value2 = STOREDEBUG_WHITESPACE,
+                                                                u32             value3 = STOREDEBUG_WHITESPACE,
+                                                                u32             value4 = STOREDEBUG_WHITESPACE );
+        void    ParserStoreMsg                              (   int             video_index,
+                                                                const void*     tx_msg, 
+                                                                u32             total_size, 
+                                                                const char*     label);
 size_t          FindNextStartCode                           (   u8*             data, 
                                                                 size_t          pos, 
                                                                 size_t          size) const;
-bool            ParseSPS                                    (   u8*             sps_data, 
+u32             ReadBE32                                (       const u8       *p);
+size_t          FindBox                                 (       const u8       *data, size_t size, const char box_type[4]);
+size_t          RemoveEmulationBytes                    (       const u8       *src, size_t src_len, u8 *dst);
+bool            ParseSPS                                (       u8*             sps_data, 
                                                                 size_t          sps_size, 
                                                                 u16*            width, 
                                                                 u16*            height, 
                                                                 u8*             profile, 
                                                                 u8*             level) const;
-u32             ReadExpGolomb                               (   u8*             data, 
+u32             ReadExpGolomb                           (       u8*             data, 
                                                                 size_t*         bit_offset) const;
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              CALLBACK / HELPERS / UTILITY / WRAPPER
