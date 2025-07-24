@@ -370,9 +370,8 @@ while (pos < mdat_payload_offset + mdat_payload_size && frame_idx < MAX_FRAMES) 
     if (nal_type == 5) { // IDR
         m_frame_address[file_index][frame_idx] = nal_ptr;   // full Annex B
         m_framelenght[file_index][frame_idx]   = vpu_len;   // includes start code
-        ParserStoreLog(file_index, "IDR addr/len",
-                       (u32)m_frame_address[file_index][frame_idx],
-                       vpu_len);
+    //  ParserStoreLog(file_index, "IDR addr/len", (u32)m_frame_address[file_index][frame_idx], vpu_len);
+        ParserStoreLog(file_index, "IDR addr/len", (u32)m_frame_address[file_index][frame_idx], m_framelenght[file_index][frame_idx]);
         frame_idx++;
     }
 
