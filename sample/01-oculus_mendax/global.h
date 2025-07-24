@@ -77,15 +77,21 @@ extern          float                   opaque;
 //  Define file names on the sd card and usb stick
 extern  const   char                    *VID__LOG_NAMES                          [VID_SD+VID_USB];
 extern  const   char                    *BMP__LOG_NAMES                          [TEX_SD+TEX_USB];
-extern          char                   *SCANED_FILES_VSH                         [40];
-extern          char                   *SCANED_FILES_FSH                         [40];
-extern          char                   *SCANED_FILES_TEX                         [40];
-extern          char                   *SCANED_FILES_VID                         [40];
 
-extern          unsigned                VSH_LOADED_BYTES                        [VSH_SD + VSH_USB];
-extern          unsigned                FSH_LOADED_BYTES                        [FSH_SD + FSH_USB];
-extern          unsigned                TEX_LOADED_BYTES                        [TEX_SD + TEX_USB];
-extern          unsigned                VID_LOADED_BYTES                        [VID_SD + VID_USB]; 
+extern  const   char                    *vhsExtensions[VSH_VALID_SUFFIX_COUNT]; 
+extern  const   char                    *fhsExtensions[FSH_VALID_SUFFIX_COUNT];
+extern  const   char                    *texExtensions[TEX_VALID_SUFFIX_COUNT];
+extern  const   char                    *vidExtensions[VID_VALID_SUFFIX_COUNT];
+
+extern          char                   *SCANED_FILES_VSH[40];
+extern          char                   *SCANED_FILES_FSH[40];
+extern          char                   *SCANED_FILES_TEX[40];
+extern          char                   *SCANED_FILES_VID[40];
+
+extern          unsigned                VSH_LOADED_BYTES[VSH_SD + VSH_USB];
+extern          unsigned                FSH_LOADED_BYTES[FSH_SD + FSH_USB];
+extern          unsigned                TEX_LOADED_BYTES[TEX_SD + TEX_USB];
+extern          unsigned                VID_LOADED_BYTES[VID_SD + VID_USB]; 
 // Define arrays for bitmap metadata
 extern          bool                    TEX_FILE_STATUS                         [TEX_SD + TEX_USB];                                
 extern          uint32_t                TEX_FILE_SIZE                           [TEX_SD + TEX_USB];           // File size 
@@ -124,8 +130,8 @@ extern          unsigned long           buffer_interval                         
 extern          unsigned long           last_valid_bpm_calculation              [2];
 extern          unsigned long           last_valid_bpm_buffer                   [2];
 extern          unsigned long           intervalBuffer                          [2][3];
-extern          unsigned char           led_col_new                        [20][3];
-extern  const   unsigned char           rgb_tab                               [49][3]; 
+extern          unsigned char           led_col_new                             [20][3];
+extern  const   unsigned char           rgb_tab                                 [49][3]; 
 
 extern          unsigned long           waveTable                               [WAVEFORMS][WAVESAMPLES];
 

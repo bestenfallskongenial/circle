@@ -96,10 +96,10 @@ bool            CKernel::filesystem_mount           (   const char* deviceName,
                     && (m_pFileSystem = new CFATFileSystem) != 0
                     && m_pFileSystem->Mount(pPartition))
                     {
-                    scanned_vsh = filesystem_ScanRootDir(vshaderFileNames, "vsh", maxVshaderFiles);
-                    scanned_fsh = filesystem_ScanRootDir(fshaderFileNames, "fsh", maxFshaderFiles);
-                    scanned_tex = filesystem_ScanRootDir(textureFileNames, "bmp", maxTextureFiles);
-                    scanned_vid = filesystem_ScanRootDir(videoFileNames,   "264", maxVideoFiles);
+                    scanned_vsh = filesystem_ScanRootDir(vshaderFileNames, vhsExtensions, VSH_VALID_SUFFIX_COUNT, maxVshaderFiles);
+                    scanned_fsh = filesystem_ScanRootDir(fshaderFileNames, fhsExtensions, FSH_VALID_SUFFIX_COUNT, maxFshaderFiles);
+                    scanned_tex = filesystem_ScanRootDir(textureFileNames, texExtensions, TEX_VALID_SUFFIX_COUNT, maxTextureFiles);
+                    scanned_vid = filesystem_ScanRootDir(videoFileNames,   vidExtensions, VID_VALID_SUFFIX_COUNT, maxVideoFiles);
 
                     VSH_LOADED_NEW = filesystem_process_files(  vshaderFileNames, vStotalLoadedBytes, m_bufferVshader, 
                                                                 scanned_vsh, VSH_LOADED_NEW, VSH_SIZE, 0);  // The file system was mounted successfully                 
@@ -161,7 +161,41 @@ bool            CKernel::filesystem_IsValidFileType (   const char* pFileName, c
                 CString suffix((const char*)fileName + dotPos + 1);
                 return suffix.Compare(extension) == 0;
 }
+unsigned        CKernel::filesystem_ScanRootDir     (   char** fileArray, 
+                                                        const char* exts[], 
+                                                        int         extCount, 
+                                                        unsigned    maxFiles)
+{
+                TDirentry Direntry;
+                TFindCurrentEntry CurrentEntry;
+                unsigned count = 0;
+                
+                unsigned nEntry = m_pFileSystem->RootFindFirst(&Direntry, &CurrentEntry);
+                if(nEntry == 0)  // Initial directory access failed
+                    {
+                    return 0;    // Return 0 to indicate failure/no files found
+                    }
 
+                while (nEntry != 0 && count < maxFiles) 
+                    {
+                    if (!(Direntry.nAttributes & FS_ATTRIB_SYSTEM)) 
+                    {
+                        for (int i = 0; i < extCount; ++i)
+                        {
+                            if (filesystem_IsValidFileType(Direntry.chTitle, exts[i])) 
+                            {
+                                fileArray[count] = new char[strlen(Direntry.chTitle) + 1];
+                                strcpy(fileArray[count], Direntry.chTitle);
+                                count++;
+                                break;
+                            }
+                        }
+                    }
+                    nEntry = m_pFileSystem->RootFindNext(&Direntry, &CurrentEntry);
+                    }
+                return count;    // Return actual number of files found and loaded
+}
+/*
 unsigned        CKernel::filesystem_ScanRootDir     (   char** fileArray, 
                                                         const char* extension, 
                                                         unsigned maxFiles)
@@ -191,7 +225,7 @@ unsigned        CKernel::filesystem_ScanRootDir     (   char** fileArray,
                     }
                 return count;    // Return actual number of files found and loaded
 }
-
+*/
 bool            CKernel::filesystem_update_USB      (   const char* deviceType)
 {
                 if (m_USBHCI.UpdatePlugAndPlay())   // Update the tree of connected USB devices

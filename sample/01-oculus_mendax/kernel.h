@@ -154,6 +154,14 @@
 #define         PARTITIONSD	            "emmc1-1"	// partition sd
 #define         PARTITIONUSB	        "umsd1-1"	// partition usb
 
+
+// valid fileneme suffixes
+
+#define 		VSH_VALID_SUFFIX_COUNT 1		// .vsh for vertex shader ( one for all this far )
+#define 		FSH_VALID_SUFFIX_COUNT 1		// .fsh for my fragment shaders ( 32 + 1 default )
+#define 		TEX_VALID_SUFFIX_COUNT 1		// .bmp for textures ( 2+ 8 i guess ) 
+#define 		VID_VALID_SUFFIX_COUNT 3		// .264 / .mov / .mp4 ( what we can parse )
+
 // LOGFILE NAMES 
 
 #define 		FILENAME_GL_LOG			"LOG-GLES.txt"

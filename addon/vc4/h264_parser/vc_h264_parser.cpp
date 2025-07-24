@@ -42,10 +42,7 @@ bool    CH264Parser::ParseInitialize (  int         max_textures,
 
     return true;
 }
-bool CH264Parser::ParseVideoAuto(
-    int file_index,
-    char* buffer_array[],
-    size_t size_array[])
+bool CH264Parser::ParseVideoAuto( int file_index, char* buffer_array[], size_t size_array[])
 {
     if (size_array[file_index] < 8) return false;
 
@@ -245,10 +242,7 @@ bool CH264Parser::ParseAnnexB(    int     file_index, char*   buffer_array[], si
 
         return m_vid_is_valid[file_index];
 }
-bool CH264Parser::ParseMP4(
-    int file_index,
-    char* buffer_array[],
-    size_t size_array[])
+bool CH264Parser::ParseMP4( int file_index, char* buffer_array[], size_t size_array[])
 {
     m_CharIndex[file_index] = 0;
     memset(m_DebugCharArray[file_index], 0, sizeof m_DebugCharArray[file_index]);

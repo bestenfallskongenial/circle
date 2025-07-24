@@ -75,6 +75,12 @@ bool           b_is_hold = false;
 
         const   char                    *VID__LOG_NAMES                          [VID_SD+VID_USB]                   = { "VIDLOG00.TXT",   "VIDLOG01.TXT",  "VIDLOG02.TXT",   "VIDLOG03.TXT", "VIDLOG04.TXT",   "VIDLOG05.TXT",  "VIDLOG06.TXT",   "VIDLOG07.TXT",  "VIDLOG08.TXT",   "VIDLOG09.TXT"    };
         const   char                    *BMP__LOG_NAMES                          [TEX_SD+TEX_USB]                   = { "BMPLOG00.TXT",   "BMPLOG01.TXT",  "BMPLOG02.TXT",   "BMPLOG03.TXT", "BMPLOG04.TXT",   "BMPLOG05.TXT",  "BMPLOG06.TXT",   "BMPLOG07.TXT",  "BMPLOG08.TXT",   "BMPLOG09.TXT"    };
+
+        const   char                    *vhsExtensions[VSH_VALID_SUFFIX_COUNT]={ "vsh" }; 
+        const   char                    *fhsExtensions[FSH_VALID_SUFFIX_COUNT]={ "fsh" };
+        const   char                    *texExtensions[TEX_VALID_SUFFIX_COUNT]={ "bmp" };
+        const   char                    *vidExtensions[VID_VALID_SUFFIX_COUNT]={ "mp4", "264", "mov" };
+
                 char                   *SCANED_FILES_VSH                         [40]                       = {   0    };
                 char                   *SCANED_FILES_FSH                         [40]                       = {   0    };
                 char                   *SCANED_FILES_TEX                         [40]                       = {   0    };
