@@ -242,6 +242,186 @@ bool CH264Parser::ParseAnnexB(    int     file_index, char*   buffer_array[], si
 
         return m_vid_is_valid[file_index];
 }
+bool CH264Parser::ParseMP4(int file_index, char* buffer_array[], size_t size_array[])
+{
+    m_CharIndex[file_index] = 0;
+    memset(m_DebugCharArray[file_index], 0, sizeof m_DebugCharArray[file_index]);
+
+    u8* data  = (u8*)buffer_array[file_index];
+    size_t size = size_array[file_index];
+
+    ParserStoreLog(file_index, "Parser / Frame Log for MP4/MOV Video ", file_index);
+
+    // Reset meta
+    m_video_width[file_index]     = 0;
+    m_video_height[file_index]    = 0;
+    m_vid_profile[file_index]     = 0;
+    m_vid_level[file_index]       = 0;
+    m_vid_is_valid[file_index]    = false;
+    m_frame_count[file_index]     = 0;
+    m_extradata_valid[file_index] = false;
+    m_extradata_len[file_index]   = 0;
+
+    //--------------------------------------------------------
+    // 1) Find moov->avcC atom
+    //--------------------------------------------------------
+    size_t moov_offset = FindBox(data, size, "moov");
+    if (!moov_offset) {
+        ParserStoreLog(file_index, "No moov found", 0);
+        m_vid_is_valid[file_index] = false;
+        return false;
+    }
+
+//  size_t avcc_offset = FindBox(data + moov_offset, size - moov_offset, "avcC");
+    size_t avcc_offset = FindBoxDeep(data + moov_offset, size - moov_offset, "avcC");
+    if (!avcc_offset) {
+        ParserStoreLog(file_index, "No avcC found", 0);
+        m_vid_is_valid[file_index] = false;
+        return false;
+    }
+    avcc_offset += moov_offset; // absolute offset
+
+    if (!ParseAvcC(file_index, data + avcc_offset, size - avcc_offset)) {
+        ParserStoreLog(file_index, "avcC parse failed", 0);
+        m_vid_is_valid[file_index] = false;
+        return false;
+    }
+
+    //--------------------------------------------------------
+    // 2) Find mdat payload
+    //--------------------------------------------------------
+    size_t mdat_offset = FindBox(data, size, "mdat");
+    if (!mdat_offset) {
+        ParserStoreLog(file_index, "No mdat found", 0);
+        m_vid_is_valid[file_index] = false;
+        return false;
+    }
+
+    u32 mdat_size = ReadBE32(data + mdat_offset);
+    size_t mdat_payload_offset = mdat_offset + 8;
+    size_t mdat_payload_size   = mdat_size - 8;
+
+    //--------------------------------------------------------
+    // 3) Walk mdat frames
+    //--------------------------------------------------------
+    size_t pos = mdat_payload_offset;
+    int frame_idx = 0;
+
+    while (pos < mdat_payload_offset + mdat_payload_size && frame_idx < MAX_FRAMES) {
+        u8 *nal_ptr = data + pos;
+
+        // MP4 length prefix
+        if (pos + 4 > size) break;
+        u32 mp4_len = ReadBE32(nal_ptr);
+        if (mp4_len == 0 || mp4_len > (mdat_payload_offset + mdat_payload_size - pos)) break;
+
+        // Patch MP4 -> Annex B
+        nal_ptr[0] = 0x00;
+        nal_ptr[1] = 0x00;
+        nal_ptr[2] = 0x00;
+        nal_ptr[3] = 0x01;
+
+        // NAL type after patched prefix
+        u8 nal_type = nal_ptr[4] & 0x1F;
+
+        if (nal_type == 5) { // IDR
+            m_frame_address[file_index][frame_idx] = nal_ptr;
+            m_framelenght[file_index][frame_idx]   = mp4_len + 4;
+            ParserStoreLog(file_index, "IDR addr/len",
+                           (u32)m_frame_address[file_index][frame_idx],
+                           m_framelenght[file_index][frame_idx]);
+            frame_idx++;
+        }
+
+        pos += 4 + mp4_len;
+    }
+
+    m_frame_count[file_index] = frame_idx;
+    ParserStoreLog(file_index, "\nParsed Frames", frame_idx);
+
+    /*
+    // validate resolution/profile/level same as your original logic
+    if (m_video_width[file_index]  != m_max_width ||
+        m_video_height[file_index] != m_max_height ||
+        m_vid_profile[file_index]  != m_max_profile ||
+        m_vid_level[file_index]    != m_max_level)
+    {
+        m_vid_is_valid[file_index] = false;
+    }
+    */
+
+    if (m_vid_is_valid[file_index])
+        ParserStoreLog(file_index,"\nMetaData Valid for Video",file_index);
+    else
+        ParserStoreLog(file_index,"\nMetaData Invalid for Video",file_index);
+
+    return m_vid_is_valid[file_index];
+}
+bool CH264Parser::ParseAvcC(int file_index, const u8* avcc, size_t max_len)
+{
+    if (max_len < 8) {
+        m_vid_is_valid[file_index] = false;
+        return false;
+    }
+
+    m_vid_profile[file_index] = avcc[1];
+    m_vid_level[file_index]   = avcc[3];
+
+    int num_sps = avcc[5] & 0x1F;
+    u8* p = (u8*)(avcc + 6);   // <--- FIX: remove const for ParseSPS
+
+    u8* out = m_extradata[file_index];
+    size_t out_len = 0;
+    static const u8 sc[4] = {0,0,0,1};
+
+    for (int i=0; i<num_sps; i++) {
+        if (p + 2 > (u8*)avcc + max_len) return false;
+        u16 sps_len = (p[0]<<8)|p[1];
+        p += 2;
+        if (p + sps_len > (u8*)avcc + max_len) return false;
+
+        memcpy(out+out_len, sc, 4); out_len += 4;
+        memcpy(out+out_len, p, sps_len); out_len += sps_len;
+
+        // now safe: ParseSPS expects u8*
+        ParseSPS(p, sps_len,
+                 &m_video_width[file_index],
+                 &m_video_height[file_index],
+                 &m_vid_profile[file_index],
+                 &m_vid_level[file_index]);
+
+        p += sps_len;
+    }
+
+    if (p + 1 > (u8*)avcc + max_len) return false;
+    int num_pps = *p++;
+    for (int i=0; i<num_pps; i++) {
+        if (p + 2 > (u8*)avcc + max_len) return false;
+        u16 pps_len = (p[0]<<8)|p[1];
+        p += 2;
+        if (p + pps_len > (u8*)avcc + max_len) return false;
+
+        memcpy(out+out_len, sc, 4); out_len += 4;
+        memcpy(out+out_len, p, pps_len); out_len += pps_len;
+
+        p += pps_len;
+    }
+
+    m_extradata_len[file_index]   = out_len;
+    m_extradata_valid[file_index] = (out_len > 0);
+
+    ParserStoreMsg(file_index, m_extradata[file_index], m_extradata_len[file_index],
+                   "EXTRADATA SPS+PPS from avcC\n");
+    ParserStoreLog(file_index, "SPS width/height",
+                   m_video_width[file_index], m_video_height[file_index]);
+    ParserStoreLog(file_index, "SPS profile/level",
+                   m_vid_profile[file_index], m_vid_level[file_index]);
+
+    return m_extradata_valid[file_index];
+}
+
+
+/*
 bool CH264Parser::ParseMP4( int file_index, char* buffer_array[], size_t size_array[])
 {
     m_CharIndex[file_index] = 0;
@@ -390,7 +570,7 @@ while (pos < mdat_payload_offset + mdat_payload_size && frame_idx < MAX_FRAMES) 
 
     return m_vid_is_valid[file_index];
 }
-
+*/
 /*inline*/ 
 u32 CH264Parser::ReadBE32(const u8 *p)
 {
@@ -399,7 +579,7 @@ u32 CH264Parser::ReadBE32(const u8 *p)
            (u32(p[2]) << 8)  |
             u32(p[3]);
 }
-
+/*
 size_t CH264Parser::FindBox(const u8 *data, size_t size, const char box_type[4])
 {
     size_t pos = 0;
@@ -423,8 +603,52 @@ size_t CH264Parser::FindBox(const u8 *data, size_t size, const char box_type[4])
     }
     return 0; // not found
 }
+*/
+size_t CH264Parser::FindBox(const u8 *data, size_t size, const char box_type[4])
+{
+    size_t pos = 0;
+    while (pos + 8 <= size) {
+        u32 box_size = ReadBE32(data + pos);
+        const u8 *type_ptr = data + pos + 4;
 
-size_t RemoveEmulationBytes(const u8 *src, size_t src_len, u8 *dst)
+        if (memcmp(type_ptr, box_type, 4) == 0)
+            return pos;  // return the start of the box
+
+        if (box_size < 8 || pos + box_size > size)
+            break; // corrupted or out of range
+
+        pos += box_size;
+    }
+    return 0;
+}
+size_t CH264Parser::FindBoxDeep(const u8 *data, size_t size, const char box_type[4])
+{
+    size_t pos = 0;
+    while (pos + 8 <= size) {
+        u32 box_size = ReadBE32(data + pos);
+        const u8 *type_ptr = data + pos + 4;
+
+        // found it?
+        if (memcmp(type_ptr, box_type, 4) == 0)
+            return pos;
+
+        // sanity check
+        if (box_size < 8 || pos + box_size > size)
+            break;
+
+        // recursive search inside this box (skip header!)
+        size_t inner_offset = FindBoxDeep(data + pos + 8, box_size - 8, box_type);
+        if (inner_offset)
+            return pos + 8 + inner_offset;
+
+        // next sibling
+        pos += box_size;
+    }
+    return 0;
+}
+
+/*
+size_t CH264Parser::RemoveEmulationBytes(const u8 *src, size_t src_len, u8 *dst)
 {
     size_t dst_len = 0;
     int zero_count = 0;
@@ -444,6 +668,7 @@ size_t RemoveEmulationBytes(const u8 *src, size_t src_len, u8 *dst)
 
     return dst_len;
 }
+*/
 bool CH264Parser::ParseBPM          (int file_index, char* buffer_array[], size_t size_array[])
 {
     m_CharIndex[file_index] = 0;

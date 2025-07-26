@@ -520,7 +520,7 @@ void            CKernel::parser_h264               (int fromFile, int toFile)
 {
     for (int i = fromFile; i < toFile; i++) 
         {
-                m_H264Parser.ParseVideo(i, m_bufferVideo, VID_LOADED_BYTES );
+                m_H264Parser.ParseVideoAuto(i, m_bufferVideo, VID_LOADED_BYTES );
                 GenerateH264ParserInfo  (i);
         }
 }

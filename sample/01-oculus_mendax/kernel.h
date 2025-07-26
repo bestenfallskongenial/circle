@@ -90,21 +90,37 @@
 #define 		G   					1  
 #define 		B    					2
 
-#define			M_1						1
-#define			M_2						2
-#define			M_L						3
-#define			A25						4
-#define			A33						5
-#define			A50  					6
-#define			TRG						7
-#define			BPM						8
-#define			LF1						9
-#define			LF2						10
-#define			CLK						11
-#define			A_0						12
+// possitions in my ccolor table?
+#define			M_1						1		// menu a
+#define			M_2						2		// menu b
+#define			M_L						3		// menu flo
+#define			A25						4		// attenuator 2.5v
+#define			A33						5		// attenuator 3.3v
+#define			A50  					6		// attenuator 5.0v
+#define			TRG						7		// trigger mode
+#define			BPM						8		// bmp mode
+#define			LF1						9		// lfo mode 1
+#define			LF2						10		// lfo mode 2
+#define			CLK						11		// clock mode? do we have one ?!
+#define			A_0						12		
 #define			A_1						13
 #define			A_2						14
 #define			A_3						15
+
+/* or for mode_storage_buffers??
+enum CHANNEL_NUMBERS
+{
+CH0_MODE
+CH1_MODE
+CH2_MODE
+CH3_MODE
+CH4_MODE
+CH5_MODE
+CH6_MODE
+CH7_MODE
+}
+*/
+
 
 #define CH0_MODE 0
 #define CH1_MODE 1
@@ -284,7 +300,8 @@ struct CUBE_STATE_T
                                             		char* videoFileNames[]  , 
 													unsigned vItotalLoadedBytes[], int maxVideoFiles);
 	bool			filesystem_IsValidFileType	(const char* pFileName, const char* extension);
-	unsigned		filesystem_ScanRootDir		(char** fileArray, const char* extension, unsigned maxFiles);
+	unsigned 		filesystem_ScanRootDir     	( char** fileArray, const char* exts[], int extCount, unsigned maxFiles );
+//	unsigned		filesystem_ScanRootDir		(char** fileArray, const char* extension, unsigned maxFiles);
 	bool			filesystem_load_kernel		(const char* deviceName, const char* filename, unsigned bufferIndex);
 	bool			filesystem_save_kernel		(const char* deviceName, const char* filename, unsigned bufferIndex);
 private:

@@ -63,7 +63,7 @@ bool           b_is_hold = false;
                 unsigned long           start_time_fps_calculation                                          =     0;
                 unsigned long           end_time_fps_calculation                                            =     0;
                 unsigned long           total_time_fps_calculation                                          =     0;
-                
+// for the fps breack mechanism                
                 unsigned long           currentTime = 0;
                 unsigned long           targetTime = 0;
                 unsigned long           delayTime = 0;
@@ -72,20 +72,20 @@ bool           b_is_hold = false;
 
                 float                   GLtime                                                              =  0.0f;
                 float                   opaque                                                              =  1.0f;
-
+// for the log files of my classes
         const   char                    *VID__LOG_NAMES                          [VID_SD+VID_USB]                   = { "VIDLOG00.TXT",   "VIDLOG01.TXT",  "VIDLOG02.TXT",   "VIDLOG03.TXT", "VIDLOG04.TXT",   "VIDLOG05.TXT",  "VIDLOG06.TXT",   "VIDLOG07.TXT",  "VIDLOG08.TXT",   "VIDLOG09.TXT"    };
         const   char                    *BMP__LOG_NAMES                          [TEX_SD+TEX_USB]                   = { "BMPLOG00.TXT",   "BMPLOG01.TXT",  "BMPLOG02.TXT",   "BMPLOG03.TXT", "BMPLOG04.TXT",   "BMPLOG05.TXT",  "BMPLOG06.TXT",   "BMPLOG07.TXT",  "BMPLOG08.TXT",   "BMPLOG09.TXT"    };
-
+// list of extensions used in my scanroot directory function
         const   char                    *vhsExtensions[VSH_VALID_SUFFIX_COUNT]={ "vsh" }; 
         const   char                    *fhsExtensions[FSH_VALID_SUFFIX_COUNT]={ "fsh" };
         const   char                    *texExtensions[TEX_VALID_SUFFIX_COUNT]={ "bmp" };
         const   char                    *vidExtensions[VID_VALID_SUFFIX_COUNT]={ "mp4", "264", "mov" };
-
+// array to store the scanned filenames?
                 char                   *SCANED_FILES_VSH                         [40]                       = {   0    };
                 char                   *SCANED_FILES_FSH                         [40]                       = {   0    };
                 char                   *SCANED_FILES_TEX                         [40]                       = {   0    };
                 char                   *SCANED_FILES_VID                         [40]                       = {   0    };
-
+// array to store the length of the loased files
                 unsigned                VSH_LOADED_BYTES                        [VSH_SD + VSH_USB]          = {   0    };
                 unsigned                FSH_LOADED_BYTES                        [FSH_SD + FSH_USB]          = {   0    };
                 unsigned                TEX_LOADED_BYTES                        [TEX_SD + TEX_USB]          = {   0    };
@@ -94,19 +94,19 @@ bool           b_is_hold = false;
                 u16                     VID_WIDTH                               [VID_SD + VID_USB]          = {   0    };
                 u16                     VID_HEIGHT                              [VID_SD + VID_USB]          = {   0    };
                 u8                      VID_PROFILE                             [VID_SD + VID_USB]          = {   0    };
-
+// the global arrays for the h264 parser, now obsolate
                 void*                   FRAME_ADDRESSES                         [VID_SD + VID_USB][MAX_FRAMES] = { 0 };
                 size_t                  FRAME_LENGTH                            [VID_SD + VID_USB][MAX_FRAMES] = { 0 };
                 int                     FRAME_COUNT                             [VID_SD + VID_USB]             = { 0 };
                 bool                    VID_IS_VALID                            [VID_SD + VID_USB]             = { false };
-                
+// the global arrays for the bmp parser, now obsolete                
                 bool                    TEX_FILE_STATUS                         [TEX_SD + TEX_USB]          = {   0    }; // Define arrays for bitmap metadata                                
                 uint32_t                TEX_FILE_SIZE                           [TEX_SD + TEX_USB]          = {   0    };           // File size 
                 uint32_t                TEX_FILE_BM_OFFSET                      [TEX_SD + TEX_USB]          = {   0    };           // Offset 
                 uint32_t                TEX_FILE_X_DIM                          [TEX_SD + TEX_USB]          = {   0    };           // Width 
                 uint32_t                TEX_FILE_Y_DIM                          [TEX_SD + TEX_USB]          = {   0    };           // Height 
                 uint32_t                TEX_FILE_BM_SIZE                        [TEX_SD + TEX_USB]          = {   0    };           // Image size 
-
+// multipliers for the lfo´s
                 int                     multiplier                              [7]                         = {   64, 32, 16, 8, 4, 2, 1 };
 
                 unsigned long           last_circle_buffer                      [LFO_INSTANCES]             = {   0    };
@@ -114,7 +114,6 @@ bool           b_is_hold = false;
                 float                   LFO_float_output                        [LFO_INSTANCES]             = {   0    };
                 int                     LFO_int_output                          [LFO_INSTANCES]             = {   0    };
                 int                     last_multiplier                         [LFO_INSTANCES]             = {   0    };
-
 
                 int                   adc_raw_value                             [ADC_CHANNELS]              = { 0 };
                 int                   adc_int_value                             [ADC_CHANNELS]              = { 0 };
@@ -282,7 +281,7 @@ unsigned long     loaded_bytes_kernel[2] = { 0 };
         int sensitivity_old = 0;
 
 
-         int mode_storage_buffers[16][33] = {0};
+         int mode_storage_buffers[16][33] = {0};               // array to store the modes and specials for all loaded fshaders?
          int shader_has_stored_params[33] = { 0 };
          int audio_sample[2] = { 0,0};
 

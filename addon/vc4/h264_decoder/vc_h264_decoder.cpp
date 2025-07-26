@@ -68,24 +68,32 @@ bool            CH264Decoder::MMALinitialize           (    u32 InBufferHandle, 
 
                 m_eglDisplay                        = eglDisplay;
                 m_eglContext                        = eglContext;
-            MMALstoreLog ( "\n------------------------------------------------");     
+            MMALstoreLog ( "\n----------------------------------------------------------------");      
+            MMALstoreLog ( "init/setup service");     
                 GetVCHIstate                ();
                 MMALinitEvents              ();
                 MMALopenService             ();
-            MMALstoreLog ( "\n------------------------------------------------");     
+            MMALstoreLog ( "\n----------------------------------------------------------------");     
+            MMALstoreLog ( "create/enable service");              
                 MMALcreateComponent         ();
                 MMALenableComponent         ();
-
+            MMALstoreLog ( "\n----------------------------------------------------------------");     
+            MMALstoreLog ( "get the vchi state");              
                 MMALgetPortInfo             (   MMAL_PORT_TYPE_INPUT , m_InputPortHandle , m_PortInfoReplyIn);
                 MMALgetPortInfo             (   MMAL_PORT_TYPE_OUTPUT, m_OutputPortHandle, m_PortInfoReplyOut);
-                
-                return true; // <- early exit we are debugging          
+            MMALstoreLog ( "\n----------------------------------------------------------------");     
+
 
                 MMALsetInputPortFormat      ();
                 MMALsetOutputPortFormat     ();
+            MMALstoreLog ( "\n----------------------------------------------------------------");     
+                      
                 
                 MMALgetPortInfo             (   MMAL_PORT_TYPE_INPUT , m_InputPortHandle , m_PortInfoReplyIn);
                 MMALgetPortInfo             (   MMAL_PORT_TYPE_OUTPUT, m_OutputPortHandle, m_PortInfoReplyOut);
+            MMALstoreLog ( "\n----------------------------------------------------------------");     
+                return true; // <- early exit we are debugging    
+
                 MMALsetZeroCopyMode         (   m_InputPortHandle );
                 MMALsetZeroCopyMode         (   m_OutputPortHandle );
 
@@ -519,49 +527,49 @@ bool            CH264Decoder::MMALgetPortInfo          (    u32 port_type,
                 memcpy(&PortInfoReply, rx_msg + sizeof(mmal_msg_header), sizeof(mmal_msg_port_info_get_reply));
 
                 MMALstoreLog("status                        ", PortInfoReply.status);
-                MMALstoreLog("component_handle              ", PortInfoReply.component_handle);
-                MMALstoreLog("port_type                     ", PortInfoReply.port_type);
-                MMALstoreLog("port_index                    ", PortInfoReply.port_index);
+                MMALstoreLog("component_handle             >", PortInfoReply.component_handle);
+                MMALstoreLog("port_type                    >", PortInfoReply.port_type);
+                MMALstoreLog("port_index                   >", PortInfoReply.port_index);
                 MMALstoreLog("found                         ", PortInfoReply.found);
-                MMALstoreLog("port_handle                   ", PortInfoReply.port_handle);
+                MMALstoreLog("port_handle                  >", PortInfoReply.port_handle);
                 // mmal_port is a struct; log each field individually:
                 MMALstoreLog("port.priv                     ", PortInfoReply.port.priv);
                 MMALstoreLog("port.name                     ", PortInfoReply.port.name);
                 MMALstoreLog("port.type                     ", PortInfoReply.port.type);
                 MMALstoreLog("port.index                    ", PortInfoReply.port.index);
                 MMALstoreLog("port.index_all                ", PortInfoReply.port.index_all);
-                MMALstoreLog("port.is_enabled               ", PortInfoReply.port.is_enabled);
+                MMALstoreLog("port.is_enabled              >", PortInfoReply.port.is_enabled);
                 MMALstoreLog("port.format                   ", PortInfoReply.port.format);
-                MMALstoreLog("port.buffer_num_min           ", PortInfoReply.port.buffer_num_min);
-                MMALstoreLog("port.buffer_size_min          ", PortInfoReply.port.buffer_size_min);
-                MMALstoreLog("port.buffer_alignment_min     ", PortInfoReply.port.buffer_alignment_min);
-                MMALstoreLog("port.buffer_num_recommended   ", PortInfoReply.port.buffer_num_recommended);
-                MMALstoreLog("port.buffer_size_recommended  ", PortInfoReply.port.buffer_size_recommended);
-                MMALstoreLog("port.buffer_num               ", PortInfoReply.port.buffer_num);
-                MMALstoreLog("port.buffer_size              ", PortInfoReply.port.buffer_size);
+                MMALstoreLog("port.buffer_num_min          !", PortInfoReply.port.buffer_num_min);
+                MMALstoreLog("port.buffer_size_min         !", PortInfoReply.port.buffer_size_min);
+                MMALstoreLog("port.buffer_alignment_min    !", PortInfoReply.port.buffer_alignment_min);
+                MMALstoreLog("port.buffer_num_recommended  !", PortInfoReply.port.buffer_num_recommended);
+                MMALstoreLog("port.buffer_size_recommended !", PortInfoReply.port.buffer_size_recommended);
+                MMALstoreLog("port.buffer_num              *", PortInfoReply.port.buffer_num);
+                MMALstoreLog("port.buffer_size             *", PortInfoReply.port.buffer_size);
                 MMALstoreLog("port.component                ", PortInfoReply.port.component);
-                MMALstoreLog("port.userdata                 ", PortInfoReply.port.userdata);
+                MMALstoreLog("port.userdata                *", PortInfoReply.port.userdata);
                 MMALstoreLog("port.capabilities             ", PortInfoReply.port.capabilities);
                 // mmal_es_format is a struct; log each field individually:
-                MMALstoreLog("format.type                   ", PortInfoReply.format.type);
-                MMALstoreLog("format.encoding               ", PortInfoReply.format.encoding);
-                MMALstoreLog("format.encoding_variant       ", PortInfoReply.format.encoding_variant);
+                MMALstoreLog("format.type                  *", PortInfoReply.format.type);
+                MMALstoreLog("format.encoding              *", PortInfoReply.format.encoding);
+                MMALstoreLog("format.encoding_variant      *", PortInfoReply.format.encoding_variant);
                 MMALstoreLog("format.es                     ", PortInfoReply.format.es);
-                MMALstoreLog("format.bitrate                ", PortInfoReply.format.bitrate);
-                MMALstoreLog("format.flags                  ", PortInfoReply.format.flags);
-                MMALstoreLog("format.extradata_size         ", PortInfoReply.format.extradata_size);
-                MMALstoreLog("format.extradata              ", PortInfoReply.format.extradata);
+                MMALstoreLog("format.bitrate               *", PortInfoReply.format.bitrate);
+                MMALstoreLog("format.flags                 *", PortInfoReply.format.flags);
+                MMALstoreLog("format.extradata_size       **", PortInfoReply.format.extradata_size);
+                MMALstoreLog("format.extradata            **", PortInfoReply.format.extradata);
                 // mmal_es_specific_format MMAL_ES_TYPE_VIDEO:
-                MMALstoreLog("es.video.width                ", PortInfoReply.es.video.width);
-                MMALstoreLog("es.video.height               ", PortInfoReply.es.video.height);
-                MMALstoreLog("es.video.crop.x               ", PortInfoReply.es.video.crop.x);
-                MMALstoreLog("es.video.crop.y               ", PortInfoReply.es.video.crop.y);
-                MMALstoreLog("es.video.crop.width           ", PortInfoReply.es.video.crop.width);
-                MMALstoreLog("es.video.crop.height          ", PortInfoReply.es.video.crop.height);
-                MMALstoreLog("es.video.frame_rate.num       ", PortInfoReply.es.video.frame_rate.num);
-                MMALstoreLog("es.video.frame_rate.den       ", PortInfoReply.es.video.frame_rate.den);
-                MMALstoreLog("es.video.par.num              ", PortInfoReply.es.video.par.num);
-                MMALstoreLog("es.video.par.den              ", PortInfoReply.es.video.par.den);
+                MMALstoreLog("es.video.width               *", PortInfoReply.es.video.width);
+                MMALstoreLog("es.video.height              *", PortInfoReply.es.video.height);
+                MMALstoreLog("es.video.crop.x              *", PortInfoReply.es.video.crop.x);
+                MMALstoreLog("es.video.crop.y              *", PortInfoReply.es.video.crop.y);
+                MMALstoreLog("es.video.crop.width          *", PortInfoReply.es.video.crop.width);
+                MMALstoreLog("es.video.crop.height         *", PortInfoReply.es.video.crop.height);
+                MMALstoreLog("es.video.frame_rate.num      *", PortInfoReply.es.video.frame_rate.num);
+                MMALstoreLog("es.video.frame_rate.den      *", PortInfoReply.es.video.frame_rate.den);
+                MMALstoreLog("es.video.par.num             *", PortInfoReply.es.video.par.num);
+                MMALstoreLog("es.video.par.den             *", PortInfoReply.es.video.par.den);
                 MMALstoreLog("es.video.color_space          ", PortInfoReply.es.video.color_space);
                 // extradata is a byte array
                 MMALstoreMsg(PortInfoReply.extradata, PortInfoReply.format.extradata_size, "extradata");

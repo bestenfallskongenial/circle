@@ -26,8 +26,8 @@ void            CKernel::menu_mode_default_A        ()  // default function for 
                 int brightnessD = 0;
 
                 unsigned long current_time = m_Timer.GetClockTicks();
-                if ( audio_source_channel != -1 )
-                    {
+                if ( audio_source_channel != -1 )                                               // lets create an additional function to do this 
+                    {                                                                           // what are we doing here? when we in aud mode we display the energy
                         util_audio_energy(adc_float_value[audio_source_channel]);
                         output_float_value[0] = util_audio_smooth_band[0];
                         output_float_value[1] = util_audio_smooth_band[1];
@@ -65,7 +65,7 @@ void            CKernel::menu_mode_default_A        ()  // default function for 
                             output_float_value[0] = adc_float_value[0];
                             output_int_value[0]   = adc_int_value[0];
 
-                                brightness = output_int_value[0]>> 4;
+                                brightness = output_int_value[0]>> 4;       // same here? an function for adc mode? 
 
                                     led_col_new[chn][R] = rgb_tab[A25 + attenuation][R] + ((rgb_tab[A25 + attenuation][R] != 0) * brightness);
                                     led_col_new[chn][G] = rgb_tab[A25 + attenuation][G] + ((rgb_tab[A25 + attenuation][G] != 0) * brightness);
@@ -78,7 +78,7 @@ void            CKernel::menu_mode_default_A        ()  // default function for 
                             output_float_value[0] = random_float_value[0];
                             output_int_value[0]   = random_int_value[0];
 
-                                brightness = output_int_value[0]>> 4;
+                                brightness = output_int_value[0]>> 4;       // and trigger mode?
 
                                     led_col_new[chn][R] = rgb_tab[TRG][R] + ((rgb_tab[TRG][R] != 0) * brightness);
                                     led_col_new[chn][G] = rgb_tab[TRG][G] + ((rgb_tab[TRG][G] != 0) * brightness);
@@ -98,7 +98,7 @@ void            CKernel::menu_mode_default_A        ()  // default function for 
                             output_float_value[0] = random_float_value[0];
                             output_int_value[0]   = random_int_value[0];
 
-                                led_col_new[chn][R] = 159;
+                                led_col_new[chn][R] = 159;                  // and bpm mode?
                                 led_col_new[chn][G] = 159;
                                 led_col_new[chn][B] = 159;
                             }
@@ -111,21 +111,21 @@ void            CKernel::menu_mode_default_A        ()  // default function for 
                                     led_col_new[chn][B] = rgb_tab[BPM][B] + ((rgb_tab[BPM][B] != 0) * brightness);
                             }
                         break;
-                        case 3:
+                        case 3:     // LFO 1 MODE
                             output_float_value[0] = LFO_float_output[0];
                             output_int_value[0]   = LFO_int_output[0];
 
-                                brightness = LFO_int_output[0]>> 4;
+                                brightness = LFO_int_output[0]>> 4;         // and for lfo 1? 
 
                                     led_col_new[chn][R] = rgb_tab[LF1][R] + ((rgb_tab[LF1][R] != 0) * brightness);
                                     led_col_new[chn][G] = rgb_tab[LF1][G] + ((rgb_tab[LF1][G] != 0) * brightness);
                                     led_col_new[chn][B] = rgb_tab[LF1][B] + ((rgb_tab[LF1][B] != 0) * brightness);
                         break;
-                        case 4:
+                        case 4:     // MODE 2 MODE
                             output_float_value[0] = LFO_float_output[1];
                             output_int_value[0]   = LFO_int_output[1];
 
-                                brightness = LFO_int_output[1]>> 4;
+                                brightness = LFO_int_output[1]>> 4;         // and lfo 2?
 
                                     led_col_new[chn][R] = rgb_tab[LF2][R] + ((rgb_tab[LF2][R] != 0) * brightness);
                                     led_col_new[chn][G] = rgb_tab[LF2][G] + ((rgb_tab[LF2][G] != 0) * brightness);

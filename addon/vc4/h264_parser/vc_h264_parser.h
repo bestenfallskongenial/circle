@@ -71,9 +71,12 @@ private:
 size_t          FindNextStartCode                           (   u8*             data, 
                                                                 size_t          pos, 
                                                                 size_t          size) const;
+bool            ParseAvcC                               (       int file_index, const u8* avcc, size_t max_len);
 u32             ReadBE32                                (       const u8       *p);
-size_t          FindBox                                 (       const u8       *data, size_t size, const char box_type[4]);
-size_t          RemoveEmulationBytes                    (       const u8       *src, size_t src_len, u8 *dst);
+size_t          FindBox                                 (       const u8 *data, size_t size, const char box_type[4]);
+size_t          FindBoxDeep                             (       const u8 *data, size_t size, const char box_type[4]);
+//size_t          FindBox                                 (       const u8       *data, size_t size, const char box_type[4]);
+//size_t          RemoveEmulationBytes                    (       const u8       *src, size_t src_len, u8 *dst);
 bool            ParseSPS                                (       u8*             sps_data, 
                                                                 size_t          sps_size, 
                                                                 u16*            width, 
