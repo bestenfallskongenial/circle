@@ -53,14 +53,14 @@ bool            CH264Decoder::MMALinitialize           (    u32 InBufferHandle, 
                                                             u32 OutBufferSize,          // my allocated output buffer size
                                                             u32 ResolutionX,            // 
                                                             u32 ResolutionY, 
-                                                            EGLDisplay eglDisplay,      // <-- add this
-                                                            EGLContext eglContext)       // <-- and this)
+                                                            EGLDisplay eglDisplay,      // EGL display connection
+                                                            EGLContext eglContext)      // EGL rendering context
 {
                 m_InputBufferHandle                 = InBufferHandle;
                 m_OutputBufferHandleA               = OutBufferHandleA;
                 m_OutputBufferHandleB               = OutBufferHandleB;
 
-                m_InputBufferSize                   = InBufferSize;
+                m_InputBufferSize                   = InBufferSize; // 81920; <- for testing the recomented buffer size - works fie!
                 m_OutputBufferSize                  = OutBufferSize;
 
                 m_ResolutionX                       = ResolutionX;
@@ -68,40 +68,57 @@ bool            CH264Decoder::MMALinitialize           (    u32 InBufferHandle, 
 
                 m_eglDisplay                        = eglDisplay;
                 m_eglContext                        = eglContext;
+
             MMALstoreLog ( "\n----------------------------------------------------------------");      
             MMALstoreLog ( "init/setup service");     
-                GetVCHIstate                ();
-                MMALinitEvents              ();
-                MMALopenService             ();
+                GetVCHIstate                ();      // initialize and bind to VCHI instance
+                MMALinitEvents              ();      // prepare MMAL internal event slots
+                MMALopenService             ();      // open MMAL VCHI service
             MMALstoreLog ( "\n----------------------------------------------------------------");     
-            MMALstoreLog ( "create/enable service");              
-                MMALcreateComponent         ();
-                MMALenableComponent         ();
+            MMALstoreLog ( "create component");              
+                MMALcreateComponent         ();      // create decoder component (vc.ril.video_decode)
+            //  MMALenableComponent         ();      // delayed until after format setup
             MMALstoreLog ( "\n----------------------------------------------------------------");     
-            MMALstoreLog ( "get the vchi state");              
+            MMALstoreLog ( "query initial port states");              
                 MMALgetPortInfo             (   MMAL_PORT_TYPE_INPUT , m_InputPortHandle , m_InputPortInfoReply);
                 MMALgetPortInfo             (   MMAL_PORT_TYPE_OUTPUT, m_OutputPortHandle, m_OutputPortInfoReply);
             MMALstoreLog ( "\n----------------------------------------------------------------");     
-                MMALsetInputPortFormat      (m_InputPortInfoReply, m_InputPortWorkingSet);
-                MMALsetOutputPortFormat     (m_OutputPortInfoReply, m_OutputPortWorkingSet);
-            MMALstoreLog ( "\n----------------------------------------------------------------");     
-                MMALgetPortInfo             (   MMAL_PORT_TYPE_INPUT , m_InputPortHandle , m_InputPortInfoReply);
-                MMALgetPortInfo             (   MMAL_PORT_TYPE_OUTPUT, m_OutputPortHandle, m_OutputPortInfoReply);
-            MMALstoreLog ( "\n----------------------------------------------------------------");     
-                return true; // <- early exit we are debugging    
+            MMALstoreLog ( "configure port formats");              
+                MMALsetInputPortFormat      (m_InputPortInfoReply, m_InputPortWorkingSet);    // set input codec + buffer size
+                MMALsetOutputPortFormat     (m_OutputPortInfoReply, m_OutputPortWorkingSet); // set output resolution + format
+                SendPortWorkingCopy         (MMAL_PORT_TYPE_INPUT,  m_InputPortWorkingSet);  // apply config to VC
+                SendPortWorkingCopy         (MMAL_PORT_TYPE_OUTPUT, m_OutputPortWorkingSet); // apply config to VC
 
+                MMALenableComponent         ();      // enable component AFTER format setup
+            MMALstoreLog ( "\n----------------------------------------------------------------");     
+            MMALstoreLog ( "re-query port states (post-format-set)");              
+                MMALgetPortInfo             (   MMAL_PORT_TYPE_INPUT , m_InputPortHandle , m_InputPortInfoReply);
+                MMALgetPortInfo             (   MMAL_PORT_TYPE_OUTPUT, m_OutputPortHandle, m_OutputPortInfoReply);
+            MMALstoreLog ( "\n----------------------------------------------------------------");     
+            MMALstoreLog ( "set zero-copy mode before port enable");              
                 MMALsetZeroCopyMode         (   m_InputPortHandle );
                 MMALsetZeroCopyMode         (   m_OutputPortHandle );
+            MMALstoreLog ( "\n----------------------------------------------------------------");                 
+            MMALstoreLog ( "verify final port states before enable");              
+                MMALgetPortInfo             (   MMAL_PORT_TYPE_INPUT , m_InputPortHandle , m_InputPortInfoReply);
+                MMALgetPortInfo             (   MMAL_PORT_TYPE_OUTPUT, m_OutputPortHandle, m_OutputPortInfoReply);                
+            MMALstoreLog ( "\n----------------------------------------------------------------");   
+            MMALstoreLog ( "enable input/output ports");              
+                MMALenablePort              (   m_InputPortHandle,  m_InputPortInfoReply);
+                MMALenablePort              (   m_OutputPortHandle, m_OutputPortInfoReply);
+            MMALstoreLog ( "\n----------------------------------------------------------------");                 
+            MMALstoreLog ( "verify post-enable port state");              
+                MMALgetPortInfo             (   MMAL_PORT_TYPE_INPUT , m_InputPortHandle , m_InputPortInfoReply);
+                MMALgetPortInfo             (   MMAL_PORT_TYPE_OUTPUT, m_OutputPortHandle, m_OutputPortInfoReply);
 
-                MMALenablePort              (   m_InputPortHandle);
-                MMALenablePort              (   m_OutputPortHandle);
+return true; // <- early exit we are debugging  
 
-
-                MMALinitialOutputBuffers    ();
-                MMALcreateTextures          ();
+                MMALinitialOutputBuffers    ();      // queue initial output buffers to VC
+                MMALcreateTextures          ();      // allocate and bind EGLImage textures
 
                 return true;
 }
+
 bool            CH264Decoder::MMALFramePoller          (    u32 frame_offset, u32 frame_length)
 {
                 CString message = "";
@@ -584,14 +601,20 @@ void CH264Decoder::MMALsetInputPortFormat( const mmal_msg_port_info_get_reply &O
     WorkingCopy = OriginalPortInfo;
 
     // 2. Modify only writable fields for the input port
-    WorkingCopy.port.buffer_num  = m_DesiredInputBuffers;      // ≥ OriginalPortInfo.port.buffer_num_min
-    WorkingCopy.port.buffer_size = m_DesiredInputBufferSize;   // ≥ OriginalPortInfo.port.buffer_size_min
+    WorkingCopy.port.buffer_num  = NUMBER_INPUTBUFFER;      // ≥ OriginalPortInfo.port.buffer_num_min
+    WorkingCopy.port.buffer_size = m_InputBufferSize;   // ≥ OriginalPortInfo.port.buffer_size_min
 
     // INPUT bitstream needs only codec type/variant
     WorkingCopy.format.encoding         = MMAL_ENCODING_H264;  
     WorkingCopy.format.encoding_variant = MMAL_ENCODING_VARIANT_H264_DEFAULT;
 
     // Width/height/crop remain untouched (decoder extracts from SPS/PPS)
+    WorkingCopy.es.video.width        = m_ResolutionX;
+    WorkingCopy.es.video.height       = m_ResolutionY;
+    WorkingCopy.es.video.crop.x       = 0;
+    WorkingCopy.es.video.crop.y       = 0;
+    WorkingCopy.es.video.crop.width   = m_ResolutionX;
+    WorkingCopy.es.video.crop.height  = m_ResolutionY;    
 }
 void CH264Decoder::MMALsetOutputPortFormat( const mmal_msg_port_info_get_reply &OriginalPortInfo, mmal_msg_port_info_get_reply &WorkingCopy)
 {
@@ -599,8 +622,8 @@ void CH264Decoder::MMALsetOutputPortFormat( const mmal_msg_port_info_get_reply &
     WorkingCopy = OriginalPortInfo;
 
     // 2. Modify only writable fields for the output port
-    WorkingCopy.port.buffer_num  = m_DesiredOutputBuffers;
-    WorkingCopy.port.buffer_size = m_DesiredOutputBufferSize;
+    WorkingCopy.port.buffer_num  = NUMBER_OUTPUTBUFFER;
+    WorkingCopy.port.buffer_size = m_OutputBufferSize;
 
     WorkingCopy.format.encoding  = MMAL_ENCODING_I420;
 
@@ -697,6 +720,114 @@ bool            CH264Decoder::MMALenableComponent      (   )                    
                 
                 return true; // (reply->status == MMAL_MSG_STATUS_SUCCESS);
 }
+bool CH264Decoder::MMALenablePort(u32 port_handle, const mmal_msg_port_info_get_reply &port_info)
+{
+    // Prepare MMAL header
+    mmal_msg_header tx_hdr = {};
+    tx_hdr.magic   = MMAL_MAGIC;
+    tx_hdr.type    = MMAL_MSG_TYPE_PORT_ACTION;
+    tx_hdr.context = NextTransId(m_TransactionId);
+
+    // Use full port struct for enable
+    mmal_msg_port_action_port tx_body = {};
+    tx_body.component_handle         = m_ComponentHandle;
+    tx_body.port_handle              = port_handle;
+    tx_body.action                   = MMAL_MSG_PORT_ACTION_TYPE_ENABLE;
+    tx_body.port                     = port_info.port;
+
+    // Combine header + body
+    u8 tx_msg[sizeof(tx_hdr) + sizeof(tx_body)];
+    memcpy(tx_msg, &tx_hdr, sizeof(tx_hdr));
+    memcpy(tx_msg + sizeof(tx_hdr), &tx_body, sizeof(tx_body));
+
+    // RX buffer
+    u8 rx_msg[MMAL_MSG_MAX_SIZE] = {};
+    size_t rx_len = 0;
+
+    // Send + wait
+    if (!MMALsendAndWait(tx_msg, sizeof(tx_msg), rx_msg, sizeof(rx_msg), &rx_len))
+    {
+        MMALstoreLog("Enable Port Failed", port_handle);
+        return false;
+    }
+
+    // Parse reply
+    const mmal_msg_header *rx_hdr = reinterpret_cast<const mmal_msg_header *>(rx_msg);
+    if (rx_hdr->type != MMAL_MSG_TYPE_PORT_ACTION)
+    {
+        MMALstoreLog("Enable Port Failed", port_handle);
+        return false;
+    }
+
+    const mmal_msg_port_action_reply *reply =
+        reinterpret_cast<const mmal_msg_port_action_reply *>(rx_msg + sizeof(mmal_msg_header));
+
+    if (reply->status != MMAL_MSG_STATUS_SUCCESS)
+    {
+        MMALstoreLog("Enable Port Failed", port_handle);
+        return false;
+    }
+
+    MMALstoreLog("Enable Port Success", port_handle);
+    return true;
+}
+
+
+/*
+bool CH264Decoder::MMALenablePort(u32 port_handle)
+{
+    // Prepare MMAL header
+    mmal_msg_header tx_hdr = {};
+    tx_hdr.magic   = MMAL_MAGIC;
+    tx_hdr.type    = MMAL_MSG_TYPE_PORT_ACTION;
+    tx_hdr.context = NextTransId(m_TransactionId);
+
+    // Minimal enable request (no mmal_port struct!)
+    mmal_msg_port_action_handle tx_body = {};
+    tx_body.component_handle         = m_ComponentHandle;
+    tx_body.port_handle              = port_handle;
+    tx_body.action                   = MMAL_MSG_PORT_ACTION_TYPE_ENABLE;
+    tx_body.connect_component_handle = 0;
+    tx_body.connect_port_handle      = 0;
+
+    // Combine header + body
+    u8 tx_msg[sizeof(tx_hdr) + sizeof(tx_body)];
+    memcpy(tx_msg, &tx_hdr, sizeof(tx_hdr));
+    memcpy(tx_msg + sizeof(tx_hdr), &tx_body, sizeof(tx_body));
+
+    // RX buffer
+    u8 rx_msg[MMAL_MSG_MAX_SIZE] = {};
+    size_t rx_len = 0;
+
+    // Send + wait
+    if (!MMALsendAndWait(tx_msg, sizeof(tx_msg), rx_msg, sizeof(rx_msg), &rx_len))
+    {
+        MMALstoreLog("Enable Port Failed", port_handle);
+        return false;
+    }
+
+    // Parse reply
+    const mmal_msg_header *rx_hdr = reinterpret_cast<const mmal_msg_header *>(rx_msg);
+    if (rx_hdr->type != MMAL_MSG_TYPE_PORT_ACTION)
+    {
+        MMALstoreLog("Enable Port Failed", port_handle);
+        return false;
+    }
+
+    const mmal_msg_port_action_reply *reply =
+        reinterpret_cast<const mmal_msg_port_action_reply *>(rx_msg + sizeof(mmal_msg_header));
+
+    if (reply->status != MMAL_MSG_STATUS_SUCCESS)
+    {
+        MMALstoreLog("Enable Port Failed", port_handle);
+        return false;
+    }
+
+    MMALstoreLog("Enable Port Success", port_handle);
+    return true;
+}
+
+
 bool CH264Decoder::MMALenablePort(u32 port_handle)
 {
     // 1. Prepare MMAL header
@@ -747,6 +878,7 @@ bool CH264Decoder::MMALenablePort(u32 port_handle)
     MMALstoreLog("\nEnable Port Success", (u32)port_handle);
     return true;
 }
+*/
 bool            CH264Decoder::MMALsetZeroCopyMode      (   u32 port_handle)                                     // mmal_msg_port_parameter_set
 {
                 mmal_msg_header tx_hdr = {};

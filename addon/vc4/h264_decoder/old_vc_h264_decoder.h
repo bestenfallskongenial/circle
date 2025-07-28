@@ -68,8 +68,8 @@ static  void    MMALcallBack                                (   void *callback_p
         bool    MMALgetPortInfo                             (   u32 port_type, 
                                                                 u32 &port_handle, 
                                                                 mmal_msg_port_info_get_reply &PortInfoReply);           // MMALsendAndWait mmal_msg_port_info_get
-        bool    MMALsetInputPortFormat                      (   );                                                      // MMALsendAndWait mmal_msg_port_info_set Input
-        bool    MMALsetOutputPortFormat                     (   );                                                      // MMALsendAndWait mmal_msg_port_info_set Output
+        void    MMALsetInputPortFormat                      (   const mmal_msg_port_info_get_reply &OriginalPortInfo, mmal_msg_port_info_get_reply &WorkingCopy );                                                      // MMALsendAndWait mmal_msg_port_info_set Input
+        void    MMALsetOutputPortFormat                     (   const mmal_msg_port_info_get_reply &OriginalPortInfo, mmal_msg_port_info_get_reply &WorkingCopy );                                                      // MMALsendAndWait mmal_msg_port_info_set Output
         bool    MMALenableComponent                         (   );                                                      // MMALsendAndWait mmal_msg_component_enable
         bool    MMALenablePort                              (   u32 port_handle, 
                                                                 const mmal_msg_port_info_get_reply &PortInfoReply);     // MMALsendAndWait mmal_msg_port_action_port

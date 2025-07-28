@@ -33,6 +33,8 @@
 #define BIT(n)          (1U << (n))
 #define BIT_ULL(n)      (1ULL << (n))
 #define MMAL_TIME_UNKNOWN BIT_ULL(63)
+#define NUMBER_INPUTBUFFER 1
+#define NUMBER_OUTPUTBUFFER 2
 
 #define MIN_BUFFERS 2                                                 // from CKernel ??
 #define FIXED_BUFFER_SIZE (1024 * 1024) // 1024 KB
