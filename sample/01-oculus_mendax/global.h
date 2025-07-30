@@ -75,8 +75,8 @@ extern          float                   GLtime;
 extern          float                   opaque;
 
 //  Define file names on the sd card and usb stick
-extern  const   char                    *VID__LOG_NAMES                          [VID_SD+VID_USB];
-extern  const   char                    *BMP__LOG_NAMES                          [TEX_SD+TEX_USB];
+extern  const   char                    *VID__LOG_NAMES                          [VID_SD+VID_USB+4];
+extern  const   char                    *BMP__LOG_NAMES                          [TEX_SD+TEX_USB+4];
 
 extern  const   char                    *vhsExtensions[VSH_VALID_SUFFIX_COUNT]; 
 extern  const   char                    *fhsExtensions[FSH_VALID_SUFFIX_COUNT];
@@ -90,16 +90,16 @@ extern          char                   *SCANED_FILES_VID[40];
 
 extern          unsigned                VSH_LOADED_BYTES[VSH_SD + VSH_USB];
 extern          unsigned                FSH_LOADED_BYTES[FSH_SD + FSH_USB];
-extern          unsigned                TEX_LOADED_BYTES[TEX_SD + TEX_USB];
+extern          unsigned                TEX_LOADED_BYTES[TEX_SD + TEX_USB+4];
 extern          unsigned                VID_LOADED_BYTES[VID_SD + VID_USB]; 
-// Define arrays for bitmap metadata
+/* Define arrays for bitmap metadata
 extern          bool                    TEX_FILE_STATUS                         [TEX_SD + TEX_USB];                                
 extern          uint32_t                TEX_FILE_SIZE                           [TEX_SD + TEX_USB];           // File size 
 extern          uint32_t                TEX_FILE_BM_OFFSET                      [TEX_SD + TEX_USB];           // Offset 
 extern          uint32_t                TEX_FILE_X_DIM                          [TEX_SD + TEX_USB];           // Width 
 extern          uint32_t                TEX_FILE_Y_DIM                          [TEX_SD + TEX_USB];           // Height 
 extern          uint32_t                TEX_FILE_BM_SIZE                        [TEX_SD + TEX_USB];           // Image size 
-//  Define the multiplier for my LFO ( static when used inside the LFO function )
+//  Define the multiplier for my LFO ( static when used inside the LFO function ) */
 extern          int                     multiplier                              [7];
 extern          unsigned long           last_circle_buffer                      [LFO_INSTANCES];
 extern          unsigned long           next_circle_buffer                      [LFO_INSTANCES];
@@ -153,6 +153,7 @@ extern          int audio_sample[2];
 
 extern          CString h264_info;  // <- needs to be global, no return of this function!
 
+extern          int m_validTextureCount;
 /*
 new menu_input_mode
 

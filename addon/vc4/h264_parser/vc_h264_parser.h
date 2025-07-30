@@ -53,7 +53,7 @@ bool            ParseInitialize                         (       int             
 bool            ParseVideoAuto                          (       int             file_index, char* buffer_array[], size_t size_array[]);                                                
 bool            ParseAnnexB                             (       int             file_index, char* buffer_array[], size_t size_array[]);
 bool            ParseMP4                                (       int             file_index, char* buffer_array[], size_t size_array[]); // works also for .mov?!
-bool            ParseBPM                                (       int             file_index, char* buffer_array[], size_t size_array[]);
+bool            ParseBPM                                (       int             file_index, char* filename_array[], char* buffer_array[], size_t size_array[]);
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              CALLBACK / HELPERS / UTILITY / WRAPPER
 //----------------------------------------------------------------------------------------------------------------------------------------------------

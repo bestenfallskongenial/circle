@@ -1012,6 +1012,76 @@ bool            CH264Decoder::MMALcreateTextures       (   )
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              H264 Decoder Runtime Code
 //----------------------------------------------------------------------------------------------------------------------------------------------------
+bool CH264Decoder::MMALbufferReady()
+{
+    // For buffer A or B, the logic now alternates which EGLImage is created
+    struct egl_image_brcm_vcsm_info info = {
+        .width = m_ResolutionX,
+        .height = m_ResolutionY,
+        .vcsm_handle = m_CurrentVCSMHandle // set earlier in MMALFramePoller
+    };
+
+    if (m_CurrentTextureIndex == 0)
+    {
+        if (m_EGLimageA)
+        {
+            eglDestroyImageKHR(m_eglDisplay, m_EGLimageA);
+            m_EGLimageA = EGL_NO_IMAGE_KHR;
+        }
+
+        m_EGLimageA = eglCreateImageKHR(
+            m_eglDisplay,
+            m_eglContext,
+            EGL_IMAGE_BRCM_VCSM,
+            (EGLClientBuffer)&info,
+            NULL
+        );
+
+        if (m_EGLimageA == EGL_NO_IMAGE_KHR)
+        {
+            MMALstoreLog("\nm_EGLimageA Failed");
+            return false;
+        }
+
+        glBindTexture(GL_TEXTURE_2D, m_TextureA);
+        glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, m_EGLimageA);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    else
+    {
+        if (m_EGLimageB)
+        {
+            eglDestroyImageKHR(m_eglDisplay, m_EGLimageB);
+            m_EGLimageB = EGL_NO_IMAGE_KHR;
+        }
+
+        m_EGLimageB = eglCreateImageKHR(
+            m_eglDisplay,
+            m_eglContext,
+            EGL_IMAGE_BRCM_VCSM,
+            (EGLClientBuffer)&info,
+            NULL
+        );
+
+        if (m_EGLimageB == EGL_NO_IMAGE_KHR)
+        {
+            MMALstoreLog("\nm_EGLimageB Failed");
+            return false;
+        }
+
+        glBindTexture(GL_TEXTURE_2D, m_TextureA); // <-- always bind m_TextureA
+        glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, m_EGLimageB);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
+//  MMALstoreLog("\neglImage Success");
+
+    m_CurrentTextureIndex ^= 1; // Toggle for next call
+
+    return true;
+}
+
+/*
 bool            CH264Decoder::MMALbufferReady          (   )
 {
                 // For buffer A:
@@ -1074,6 +1144,7 @@ bool            CH264Decoder::MMALbufferReady          (   )
 
                 return true;    // please the compiler!!!!
 }
+*/                
 bool            CH264Decoder::MMALqueueOutputBuffer    (   )    // mmal_msg_buffer_from_host
 {
                 mmal_msg_header tx_hdr = {};

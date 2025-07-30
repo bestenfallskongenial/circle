@@ -20,7 +20,7 @@ void            CKernel::util_prep_parameters       ()
 int             CKernel::util_choose_program        ()
 {
                 static int usedShader = 0;  // Static variable to maintain value between function calls
-                int calculated = output_int_value[ADC_SELECT_PRG] * FSH_LOADED_NEW / 1024;  //???
+                int calculated = adc_raw_value[ADC_SELECT_PRG] * FSH_LOADED_NEW / 1024;  // *** was adc_int_value but that is effected by the attenuation
                 // Only update if the calculated index points to a valid u_program_handle
                 if (m_shaderStatusFlags[calculated ]==true /*&& g_menu_mode_new == 0*/) usedShader = calculated;
 
@@ -66,9 +66,9 @@ void            CKernel::util_store_program         ()
 int             CKernel::util_choose_texture        ()
 {
                 static int usedTexture = 0;
-                if (TEX_LOADED_NEW != 0) 
+                if (m_validTextureCount != 0) 
                     {
-                    int calculated = output_int_value[ADC_SELECT_TEX] * (TEX_LOADED_NEW - 1) / 1024;
+                    int calculated = adc_raw_value[ADC_SELECT_TEX] * (m_validTextureCount ) / 1024; // *** was adc_int_value but that is effected by the attenuation
                     usedTexture = calculated;
                     }
                 return usedTexture;
@@ -529,7 +529,7 @@ void            CKernel::parser_bmp               (int fromFile, int toFile)
 {
     for (int i = fromFile; i < toFile; i++) 
         {
-                m_H264Parser.ParseBPM(i, m_bufferTexture, VID_LOADED_BYTES );
+                m_H264Parser.ParseBPM(i, SCANED_FILES_TEX, m_bufferTexture, TEX_LOADED_BYTES );
                 GenerateBmpParserInfo  (i);
         }
 }

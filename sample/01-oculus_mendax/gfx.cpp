@@ -420,14 +420,14 @@ void            CKernel::gfx_init_uniforms          (   CUBE_STATE_T *state, int
 
 void            CKernel::gfx_init_textures          (   CUBE_STATE_T *state, int fromFile, int toFile)
 {
-                int validTextureCount = 0;  // Counter for valid textures only
+                // m_validTextureCount = 0;  // Counter for valid textures only
 
                 for (int i = fromFile; i < toFile; i++)
                     {
                     if(m_H264Parser.m_tex_valid[i] == true)
                         {
-                        glGenTextures(1, &state->gl_tex_id[validTextureCount]);  // Use counter instead of i
-                        glBindTexture(GL_TEXTURE_2D, state->gl_tex_id[validTextureCount]);
+                        glGenTextures(1, &state->gl_tex_id[m_validTextureCount]);  // Use counter instead of i
+                        glBindTexture(GL_TEXTURE_2D, state->gl_tex_id[m_validTextureCount]);
                     //  check();
                         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
                         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -448,13 +448,10 @@ void            CKernel::gfx_init_textures          (   CUBE_STATE_T *state, int
                     //  check();
                         glBindTexture(GL_TEXTURE_2D, 0);
                     //  check();
-                        validTextureCount++;  // Increment only after successful texture creation
+                        m_validTextureCount++;  // Increment only after successful texture creation
                         }
                     m_Watchdog.Start(TIMEOUT);       // new watchdog
                     }
-
-                // Store the actual number of valid textures for later use
-                TEX_LOADED_NEW = validTextureCount;
 }
 
 void            CKernel::gfx_init_v_buffer          (   CUBE_STATE_T *state)                              // Function to initialize Buffers 
@@ -521,12 +518,12 @@ void            CKernel::gfx_render_shader_a        (   CUBE_STATE_T *state)
                                                                         output_float_value[5], 
                                                                         output_float_value[6], 
                                                                         output_float_value[7]);
-                if(state->u_tex_l[gl_current_prg] != -1) glUniform1i(   state->u_tex_l[gl_current_prg], TEX_LOADED_NEW);
+                if(state->u_tex_l[gl_current_prg] != -1) glUniform1i(   state->u_tex_l[gl_current_prg], m_validTextureCount);
 
                 switch(mode_storage_buffers[TEX_MODE][current_buffer]) 
                     {
                     case false:     // Original mode
-                        for (int i = 0; i < TEX_LOADED_NEW; i++) 
+                        for (int i = 0; i < m_validTextureCount; i++) 
                             {
                             glActiveTexture(GL_TEXTURE0+i);
                             glBindTexture(GL_TEXTURE_2D, state->gl_tex_id[i]);
@@ -539,7 +536,7 @@ void            CKernel::gfx_render_shader_a        (   CUBE_STATE_T *state)
                         break;
 
                     case true:      // Single texture mode
-                        switch(TEX_LOADED_NEW) 
+                        switch(m_validTextureCount) 
                             {
                             case 0:     // No textures - skip entirely
                                 break;

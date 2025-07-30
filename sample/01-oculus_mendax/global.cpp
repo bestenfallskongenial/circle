@@ -73,8 +73,8 @@ bool           b_is_hold = false;
                 float                   GLtime                                                              =  0.0f;
                 float                   opaque                                                              =  1.0f;
 // for the log files of my classes
-        const   char                    *VID__LOG_NAMES                          [VID_SD+VID_USB]                   = { "VIDLOG00.TXT",   "VIDLOG01.TXT",  "VIDLOG02.TXT",   "VIDLOG03.TXT", "VIDLOG04.TXT",   "VIDLOG05.TXT",  "VIDLOG06.TXT",   "VIDLOG07.TXT",  "VIDLOG08.TXT",   "VIDLOG09.TXT"    };
-        const   char                    *BMP__LOG_NAMES                          [TEX_SD+TEX_USB]                   = { "BMPLOG00.TXT",   "BMPLOG01.TXT",  "BMPLOG02.TXT",   "BMPLOG03.TXT", "BMPLOG04.TXT",   "BMPLOG05.TXT",  "BMPLOG06.TXT",   "BMPLOG07.TXT",  "BMPLOG08.TXT",   "BMPLOG09.TXT"    };
+        const   char                    *VID__LOG_NAMES                          [VID_SD+VID_USB+4]                   = { "VIDLOG00.TXT",   "VIDLOG01.TXT",  "VIDLOG02.TXT",   "VIDLOG03.TXT", "VIDLOG04.TXT",   "VIDLOG05.TXT",  "VIDLOG06.TXT",   "VIDLOG07.TXT",  "VIDLOG08.TXT",   "VIDLOG09.TXT",   "VIDLOG10.TXT",   "VIDLOG11.TXT",   "VIDLOG12.TXT",   "VIDLOG13.TXT"    };
+        const   char                    *BMP__LOG_NAMES                          [TEX_SD+TEX_USB+4]                   = { "BMPLOG00.TXT",   "BMPLOG01.TXT",  "BMPLOG02.TXT",   "BMPLOG03.TXT", "BMPLOG04.TXT",   "BMPLOG05.TXT",  "BMPLOG06.TXT",   "BMPLOG07.TXT",  "BMPLOG08.TXT",   "BMPLOG09.TXT",   "BMPLOG10.TXT",   "BMPLOG11.TXT",   "BMPLOG12.TXT",   "BMPLOG14.TXT"    };
 // list of extensions used in my scanroot directory function
         const   char                    *vhsExtensions[VSH_VALID_SUFFIX_COUNT]={ "vsh" }; 
         const   char                    *fhsExtensions[FSH_VALID_SUFFIX_COUNT]={ "fsh" };
@@ -88,9 +88,9 @@ bool           b_is_hold = false;
 // array to store the length of the loased files
                 unsigned                VSH_LOADED_BYTES                        [VSH_SD + VSH_USB]          = {   0    };
                 unsigned                FSH_LOADED_BYTES                        [FSH_SD + FSH_USB]          = {   0    };
-                unsigned                TEX_LOADED_BYTES                        [TEX_SD + TEX_USB]          = {   0    };
+                unsigned                TEX_LOADED_BYTES                        [TEX_SD + TEX_USB+4]          = {   0    };
                 unsigned                VID_LOADED_BYTES                        [VID_SD + VID_USB]          = {   0    }; 
-                // H.264 Video Parser
+/* H.264 Video Parser
                 u16                     VID_WIDTH                               [VID_SD + VID_USB]          = {   0    };
                 u16                     VID_HEIGHT                              [VID_SD + VID_USB]          = {   0    };
                 u8                      VID_PROFILE                             [VID_SD + VID_USB]          = {   0    };
@@ -106,7 +106,8 @@ bool           b_is_hold = false;
                 uint32_t                TEX_FILE_X_DIM                          [TEX_SD + TEX_USB]          = {   0    };           // Width 
                 uint32_t                TEX_FILE_Y_DIM                          [TEX_SD + TEX_USB]          = {   0    };           // Height 
                 uint32_t                TEX_FILE_BM_SIZE                        [TEX_SD + TEX_USB]          = {   0    };           // Image size 
-// multipliers for the lfo´s
+// multipliers for the lfo´s */
+
                 int                     multiplier                              [7]                         = {   64, 32, 16, 8, 4, 2, 1 };
 
                 unsigned long           last_circle_buffer                      [LFO_INSTANCES]             = {   0    };
@@ -287,6 +288,8 @@ unsigned long     loaded_bytes_kernel[2] = { 0 };
 
          CString h264_info;  // <- needs to be global, no return of this function!
 
+
+         int m_validTextureCount=0;
 /*
 new menu_input_mode
 

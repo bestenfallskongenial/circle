@@ -669,7 +669,7 @@ size_t CH264Parser::RemoveEmulationBytes(const u8 *src, size_t src_len, u8 *dst)
     return dst_len;
 }
 */
-bool CH264Parser::ParseBPM          (int file_index, char* buffer_array[], size_t size_array[])
+bool CH264Parser::ParseBPM          (int file_index, char* filename_array[], char* buffer_array[], size_t size_array[])
 {
     m_CharIndex[file_index] = 0;
     memset(m_DebugCharArray[file_index], 
@@ -680,8 +680,9 @@ bool CH264Parser::ParseBPM          (int file_index, char* buffer_array[], size_
     size_t size = size_array[file_index];
 
     // — initialize log entry for this texture —
-    ParserStoreLog(file_index, "=== BMP header parse start ===", file_index);
-
+    ParserStoreLog(file_index, "======== BMP header parse start ========");
+    ParserStoreLog(file_index, filename_array[file_index], file_index);
+    ParserStoreLog(file_index, "========================================");
     // read fields
     u32 fileSize    = data[2]  | (data[3]<<8)  | (data[4]<<16)  | (data[5]<<24);
     u32 dataOffset  = data[10] | (data[11]<<8) | (data[12]<<16) | (data[13]<<24);
@@ -695,7 +696,8 @@ bool CH264Parser::ParseBPM          (int file_index, char* buffer_array[], size_
 
     if (size != fileSize)
         {
-        ParserStoreLog(file_index, "Filesize missmatch", file_index);
+        ParserStoreLog(file_index, "Filesize parsed/stored", fileSize, size_array[file_index]);
+        ParserStoreLog(file_index, "Filesize missmatch    ", file_index);
         // return m_tex_valid[file_index] = false;
         }
 

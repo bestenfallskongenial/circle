@@ -103,16 +103,16 @@ bool            CKernel::filesystem_mount           (   const char* deviceName,
 
                     VSH_LOADED_NEW = filesystem_process_files(  vshaderFileNames, vStotalLoadedBytes, m_bufferVshader, 
                                                                 scanned_vsh, VSH_LOADED_NEW, VSH_SIZE, 0);  // The file system was mounted successfully                 
-
+                    m_Watchdog.Start(8);        
                     FSH_LOADED_NEW = filesystem_process_files(  fshaderFileNames, fStotalLoadedBytes, m_bufferFshader, 
                                                                 scanned_fsh, FSH_LOADED_NEW, FSH_SIZE, 1);                               
-
+                    m_Watchdog.Start(8);    
                     TEX_LOADED_NEW = filesystem_process_files(  textureFileNames, tXtotalLoadedBytes, m_bufferTexture, 
                                                                 scanned_tex, TEX_LOADED_NEW, TEX_SIZE, 2);                                   
-                  
+                    m_Watchdog.Start(8);    
                     VID_LOADED_NEW = filesystem_process_files(  videoFileNames  , vItotalLoadedBytes, m_bufferVideo  , 
                                                                 scanned_vid  , VID_LOADED_NEW , VID_SIZE  , 3);                                
-
+                    m_Watchdog.Start(8);    
                     m_pFileSystem->UnMount();
                     success = true;
                     }
