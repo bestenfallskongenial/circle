@@ -133,8 +133,10 @@ static  void    MMALcallBack                                (   void *callback_p
 public:
         u32                                                 m_CharIndex = 0;
         char                                                m_DebugCharArray[MMAL_MAX_DEBUG_FILE_LENGTH] = { 0 }; // is exposed for 
-        GLuint                                              m_TextureA = 0;
-        GLuint                                              m_TextureB = 0;
+        GLuint                                              m_TextureA = 0;     // must be exposed
+        GLuint                                              m_TextureB = 0;     // must NOT be exposed
+        int                                                 m_CurrentTextureIndex = 0;
+
 };
 #endif // _H264_DECODER_CLASS_H
 //----------------------------------------------------------------------------------------------------------------------------------------------------

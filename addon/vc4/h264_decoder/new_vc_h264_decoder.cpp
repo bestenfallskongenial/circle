@@ -46,8 +46,7 @@ extern "C" void vc_host_get_vchi_state(VCHI_INSTANCE_T *inst, VCHI_CONNECTION_T 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              USER API
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-bool            CH264Decoder::MMALinitialize           (    u32 blockSize,
-                                                            u32 InBufferHandle,         // my input buffer handle from smem
+bool            CH264Decoder::MMALinitialize           (    u32 InBufferHandle,         // my input buffer handle from smem
                                                             u32 InBufferSize,           // my allocated input buffer size 
                                                             u32 OutBufferHandleA,       // my output buffer handle a from smem 
                                                             u32 OutBufferHandleB,       // my output buffer handle b from smem
@@ -57,7 +56,6 @@ bool            CH264Decoder::MMALinitialize           (    u32 blockSize,
                                                             EGLDisplay eglDisplay,      // EGL display connection
                                                             EGLContext eglContext)      // EGL rendering context
 {
-                m_blockSize                         = blockSize                      
                 m_InputBufferHandle                 = InBufferHandle;
                 m_OutputBufferHandleA               = OutBufferHandleA;
                 m_OutputBufferHandleB               = OutBufferHandleB;
@@ -140,52 +138,54 @@ bool            CH264Decoder::MMALFramePoller          (    u32 frame_offset, u3
                     }
                 switch (rx_msg.h.status)
                     {
-                    case MMAL_MSG_STATUS_SUCCESS:
+                    case MMAL_MSG_STATUS_SUCCESS:           //  0 Success //
                         {
                         uint32_t ready_vcsm_handle = rx_msg.u.buffer_from_host.buffer_header.data;
 
+                        // Alternating mechanism using if/else
                         if (ready_vcsm_handle == m_VCSMHandleA) 
                             {
                             m_CurrentVCSMHandle   = m_VCSMHandleA;
-
-                            if (!MMALqueueOutputBuffer(m_OutputBufferHandleA, m_OutputBufferSize)) return false;
+                            m_CurrentBufferHandle = m_OutputBufferHandleA;
+                            m_AltVCSMHandle       = m_VCSMHandleB;
+                            m_AltBufferHandle     = m_OutputBufferHandleB;
                             } 
                         else 
                             {
                             m_CurrentVCSMHandle   = m_VCSMHandleB;
-
-                            if (!MMALqueueOutputBuffer(m_OutputBufferHandleB, m_OutputBufferSize)) return false;
+                            m_CurrentBufferHandle = m_OutputBufferHandleB;
+                            m_AltVCSMHandle       = m_VCSMHandleA;
+                            m_AltBufferHandle     = m_OutputBufferHandleA;
                             }
 
                         MMALbufferReady();
 
-                //      MMALqueueOutputBuffer();
+                        MMALqueueOutputBuffer();
 
                         MMALqueueInputFrame(frame_offset, frame_length);
-
-                                                       message = "MMAL_MSG_STATUS_SUCCESS      - All is Fine";
-                        MMALstoreLog(message, frame_offset, frame_length);     
+                        message                             = "MMAL_MSG_STATUS_SUCCESS      - All is Fine                           ";        
+                        MMALstoreLog ( message, frame_offset, frame_length);     
                         return true;
-                    }
-
-                    case MMAL_MSG_STATUS_ENOMEM:       message = "MMAL_MSG_STATUS_ENOMEM       - Out of memory                      "; break;
-                    case MMAL_MSG_STATUS_ENOSPC:       message = "MMAL_MSG_STATUS_ENOSPC       - Out of resources other than memory "; break;
-                    case MMAL_MSG_STATUS_EINVAL:       message = "MMAL_MSG_STATUS_EINVAL       - Argument is invalid                "; break;
-                    case MMAL_MSG_STATUS_ENOSYS:       message = "MMAL_MSG_STATUS_ENOSYS       - Function not implemented           "; break;
-                    case MMAL_MSG_STATUS_ENOENT:       message = "MMAL_MSG_STATUS_ENOENT       - No such file or directory          "; break;
-                    case MMAL_MSG_STATUS_ENXIO:        message = "MMAL_MSG_STATUS_ENXIO        - No such device or address          "; break;
-                    case MMAL_MSG_STATUS_EIO:          message = "MMAL_MSG_STATUS_EIO          - I/O error                          "; break;
-                    case MMAL_MSG_STATUS_ESPIPE:       message = "MMAL_MSG_STATUS_ESPIPE       - Illegal seek                       "; break;
-                    case MMAL_MSG_STATUS_ECORRUPT:     message = "MMAL_MSG_STATUS_ECORRUPT     - Data is corrupt                    "; break;
-                    case MMAL_MSG_STATUS_ENOTREADY:    message = "MMAL_MSG_STATUS_ENOTREADY    - Component is not ready             "; break;
-                    case MMAL_MSG_STATUS_ECONFIG:      message = "MMAL_MSG_STATUS_ECONFIG      - Component is not configured        "; break;
-                    case MMAL_MSG_STATUS_EISCONN:      message = "MMAL_MSG_STATUS_EISCONN      - Port is already connected          "; break;
-                    case MMAL_MSG_STATUS_ENOTCONN:     message = "MMAL_MSG_STATUS_ENOTCONN     - Port is disconnected               "; break;
-                    case MMAL_MSG_STATUS_EAGAIN:       message = "MMAL_MSG_STATUS_EAGAIN       - Resource temporarily unavailable   "; break;
-                    case MMAL_MSG_STATUS_EFAULT:       message = "MMAL_MSG_STATUS_EFAULT       - Bad address                        "; break;
-                    default:                           message = "Unknown MMAL status                                               "; break;
+                        }
+                    case MMAL_MSG_STATUS_ENOMEM: message    = "MMAL_MSG_STATUS_ENOMEM       - Out of memory                         "; break;
+                    case MMAL_MSG_STATUS_ENOSPC: message    = "MMAL_MSG_STATUS_ENOSPC       - Out of resources other than memory    "; break;
+                    case MMAL_MSG_STATUS_EINVAL: message    = "MMAL_MSG_STATUS_EINVAL       - Argument is invalid                   "; break;
+                    case MMAL_MSG_STATUS_ENOSYS: message    = "MMAL_MSG_STATUS_ENOSYS       - Function not implemented              "; break;
+                    case MMAL_MSG_STATUS_ENOENT: message    = "MMAL_MSG_STATUS_ENOENT       - No such file or directory             "; break;
+                    case MMAL_MSG_STATUS_ENXIO: message     = "MMAL_MSG_STATUS_ENXIO        - No such device or address             "; break;
+                    case MMAL_MSG_STATUS_EIO: message       = "MMAL_MSG_STATUS_EIO          - I/O error                             "; break;
+                    case MMAL_MSG_STATUS_ESPIPE: message    = "MMAL_MSG_STATUS_ESPIPE       - Illegal seek                          "; break;
+                    case MMAL_MSG_STATUS_ECORRUPT: message  = "MMAL_MSG_STATUS_ECORRUPT     - Data is corrupt                       "; break;
+                    case MMAL_MSG_STATUS_ENOTREADY: message = "MMAL_MSG_STATUS_ENOTREADY    - Component is not ready                "; break;
+                    case MMAL_MSG_STATUS_ECONFIG: message   = "MMAL_MSG_STATUS_ECONFIG      - Component is not configured           "; break;
+                    case MMAL_MSG_STATUS_EISCONN: message   = "MMAL_MSG_STATUS_EISCONN      - Port is already connected             "; break;
+                    case MMAL_MSG_STATUS_ENOTCONN: message  = "MMAL_MSG_STATUS_ENOTCONN     - Port is disconnected                  "; break;
+                    case MMAL_MSG_STATUS_EAGAIN: message    = "MMAL_MSG_STATUS_EAGAIN       - Resource temporarily unavailable      "; break;
+                    case MMAL_MSG_STATUS_EFAULT: message    = "MMAL_MSG_STATUS_EFAULT       - Bad address                           "; break;
+                    default: message                        = "Unknown MMAL status                                                  "; break;
                 }
-                MMALstoreLog(message, frame_offset, frame_length);            
+                MMALstoreLog ( message, frame_offset, frame_length);            
+                    
                 MMALstoreMsg(&rx_msg, msg_len, "Poller ERROR");  
 
                 return false;
@@ -293,6 +293,37 @@ void CH264Decoder::MMALstoreLog( const char* label,
     m_DebugCharArray[m_CharIndex++] = '\n';
     m_DebugCharArray[m_CharIndex]   = '\0';
 }
+/*
+void            CH264Decoder::MMALstoreLog              (   const char* label, u32 value)
+{
+    // copy label
+    for (const char* p = label; *p; ++p) 
+        {
+        m_DebugCharArray[m_CharIndex] = *p;
+        m_CharIndex++;
+        }
+    if(value == STOREDEBUG_WHITESPACE ) return;    
+    // Write " 0x" prefix
+    m_DebugCharArray[m_CharIndex] = ' ';
+    m_CharIndex++;
+    m_DebugCharArray[m_CharIndex] = '0';
+    m_CharIndex++;
+    m_DebugCharArray[m_CharIndex] = 'x';
+    m_CharIndex++;
+
+    // Write value in hexadecimal (big-endian, no leading zero suppression)
+    for (int i = (sizeof(u32) * 2) - 1; i >= 0; --i) 
+        {
+        char hex = "0123456789ABCDEF"[(value >> (i * 4)) & 0xF];
+        m_DebugCharArray[m_CharIndex] = hex;
+        m_CharIndex++;
+        }
+    // newline + terminator
+    m_DebugCharArray[m_CharIndex] = '\n';
+    m_CharIndex++;    
+    m_DebugCharArray[m_CharIndex] = '\0';
+}
+*/
 void            CH264Decoder::MMALstoreMsg              (   const void* tx_msg, u32 total_size, const char* label)
 {   
     // insert leading newline
@@ -390,6 +421,15 @@ bool            CH264Decoder::MMALopenService          (   )
                 MMALstoreLog("want_unaligned_bulk_rx        ", params.want_unaligned_bulk_rx);
                 MMALstoreLog("want_unaligned_bulk_tx        ", params.want_unaligned_bulk_tx);
                 MMALstoreLog("want_crc                      ", params.want_crc);
+/*
+                if(!vchi_service_open(m_VCHIInstance, &params, &m_ServiceHandle))
+                    {
+                    MMALstoreLog ( "\nOpen MMAL Service Failed!");
+                    return false;
+                    }
+                MMALstoreLog ( "\nOpen MMAL Service Success!", (u32)m_ServiceHandle); 
+                return true; // (rc == 0);
+*/
 
                 int rc = vchi_service_open(m_VCHIInstance, &params, &m_ServiceHandle);
                 if ( rc != 0)
@@ -404,23 +444,22 @@ bool            CH264Decoder::MMALopenService          (   )
 }
 bool            CH264Decoder::MMALcreateComponent      (   )                                                    // mmal_msg_component_create    // expects a pointer therefore CreateComponent(&m_My_private_Member);
 {
-                mmal_msg_header tx_hdr                  = {};                                                    // 1. MMAL header: all fields shown
+                mmal_msg_header tx_hdr = {};                                                    // 1. MMAL header: all fields shown
 
-                tx_hdr.magic                            = MMAL_MAGIC;
-                tx_hdr.type                             = MMAL_MSG_TYPE_COMPONENT_CREATE;
-                tx_hdr.control_service                  = 0;         // *** NEW TO MATCH THE DEFINITION!
-                tx_hdr.context                          = NextTransId(m_TransactionId);          // If you want to track transactions, set it here.
-                tx_hdr.status                           = 0;
-                tx_hdr.padding                          = 0;                                     // If your struct has this field (show all!)
+                tx_hdr.magic                           = MMAL_MAGIC;
+                tx_hdr.type                            = MMAL_MSG_TYPE_COMPONENT_CREATE;
+                tx_hdr.context                         = NextTransId(m_TransactionId);          // If you want to track transactions, set it here.
+                tx_hdr.status                          = 0;
+                tx_hdr.padding                         = 0;                                     // If your struct has this field (show all!)
 
-                mmal_msg_component_create tx_body       = {};                                         // 2. MMAL tx_body: all fields shown
+                mmal_msg_component_create tx_body = {};                                         // 2. MMAL tx_body: all fields shown
 
                 tx_body.client_component                = 0;
                 memset(tx_body.name, 0, sizeof(tx_body.name));
                 strncpy(tx_body.name, "ril.video_decode", sizeof(tx_body.name) - 1);         // or "ril.video_decode"? sure about the -1 here?
                 tx_body.pid                             = 0;
-            //  tx_body.reserved0                       = 0;                                     // If present
-            //  tx_body.reserved1                       = 0;                                     // If present
+            //    tx_body.reserved0                      = 0;                                     // If present
+            //    tx_body.reserved1                      = 0;                                     // If present
 
                 u8 tx_msg[sizeof(tx_hdr) + sizeof(tx_body)];                                    // 3. Compose full message buffer
                 memcpy(tx_msg, &tx_hdr, sizeof(tx_hdr));
@@ -449,10 +488,10 @@ bool            CH264Decoder::MMALcreateComponent      (   )                    
                     return false;
                     }
 
-                m_ComponentHandle                   = reply->component_handle;   // Direct member assignment
-                m_NumInputs                         = reply->input_num;
-                m_NumOutputs                        = reply->output_num;
-                m_NumClock                          = reply->clock_num;
+                m_ComponentHandle = reply->component_handle;   // Direct member assignment
+                m_NumInputs     = reply->input_num;
+                m_NumOutputs    = reply->output_num;
+                m_NumClock      = reply->clock_num;
 
                 MMALstoreLog ( "\nCreate Component Success!     ", (u32)m_ComponentHandle);
                 MMALstoreLog ( "\nNumber of In / Output Ports   ", (u32)m_NumInputs, (u32)m_NumOutputs);
@@ -464,18 +503,17 @@ bool            CH264Decoder::MMALgetPortInfo          (    u32 port_type,
                                                             u32 &port_handle, 
                                                             mmal_msg_port_info_get_reply &PortInfoReply)        // mmal_msg_port_info_get
 {
-                mmal_msg_header tx_hdr              = {};
-                tx_hdr.magic                        = MMAL_MAGIC;
-                tx_hdr.type                         = MMAL_MSG_TYPE_PORT_INFO_GET;
-                tx_hdr.control_service              = 0;         // *** NEW TO MATCH THE DEFINITION!                
-                tx_hdr.context                      = NextTransId(m_TransactionId);
-                tx_hdr.status                       = 0;
-                tx_hdr.padding                      = 0;
+                mmal_msg_header tx_hdr = {};
+                tx_hdr.magic                           = MMAL_MAGIC;
+                tx_hdr.type                            = MMAL_MSG_TYPE_PORT_INFO_GET;
+                tx_hdr.context                         = NextTransId(m_TransactionId);
+                tx_hdr.status                          = 0;
+                tx_hdr.padding                         = 0;
 
-                mmal_msg_port_info_get tx_body      = {};
-                tx_body.component_handle            = m_ComponentHandle;
-                tx_body.port_type                   = port_type;
-                tx_body.index                       = 0; //port_index;
+                mmal_msg_port_info_get tx_body = {};
+                tx_body.component_handle               = m_ComponentHandle;
+                tx_body.port_type                      = port_type;
+                tx_body.index                          = 0; //port_index;
 
                 u8 tx_msg[sizeof(tx_hdr) + sizeof(tx_body)] = {};
                 memcpy(tx_msg, &tx_hdr, sizeof(tx_hdr));
@@ -552,7 +590,7 @@ bool            CH264Decoder::MMALgetPortInfo          (    u32 port_type,
                 // extradata is a byte array
                 MMALstoreMsg(PortInfoReply.extradata, PortInfoReply.format.extradata_size, "extradata");
                 // Assign port handle to out reference
-                port_handle                         = PortInfoReply.port_handle;
+                port_handle = PortInfoReply.port_handle;
                    
                 // Optionally also store in your private member here if needed:
                 // m_PortHandleIn = PortInfoReply.port_handle; // or similar
@@ -566,20 +604,20 @@ void CH264Decoder::MMALsetInputPortFormat( const mmal_msg_port_info_get_reply &O
     WorkingCopy = OriginalPortInfo;
 
     // 2. Modify only writable fields for the input port
-    WorkingCopy.port.buffer_num                     = NUMBER_INPUTBUFFER;      // ≥ OriginalPortInfo.port.buffer_num_min
-    WorkingCopy.port.buffer_size                    = m_InputBufferSize;   // ≥ OriginalPortInfo.port.buffer_size_min
+    WorkingCopy.port.buffer_num  = NUMBER_INPUTBUFFER;      // ≥ OriginalPortInfo.port.buffer_num_min
+    WorkingCopy.port.buffer_size = m_InputBufferSize;   // ≥ OriginalPortInfo.port.buffer_size_min
 
     // INPUT bitstream needs only codec type/variant
-    WorkingCopy.format.encoding                     = MMAL_ENCODING_H264;  
-    WorkingCopy.format.encoding_variant             = MMAL_ENCODING_VARIANT_H264_DEFAULT;
+    WorkingCopy.format.encoding         = MMAL_ENCODING_H264;  
+    WorkingCopy.format.encoding_variant = MMAL_ENCODING_VARIANT_H264_DEFAULT;
 
     // Width/height/crop remain untouched (decoder extracts from SPS/PPS)
-    WorkingCopy.es.video.width                      = m_ResolutionX;
-    WorkingCopy.es.video.height                     = m_ResolutionY;
-    WorkingCopy.es.video.crop.x                     = 0;
-    WorkingCopy.es.video.crop.y                     = 0;
-    WorkingCopy.es.video.crop.width                 = m_ResolutionX;
-    WorkingCopy.es.video.crop.height                = m_ResolutionY;    
+    WorkingCopy.es.video.width        = m_ResolutionX;
+    WorkingCopy.es.video.height       = m_ResolutionY;
+    WorkingCopy.es.video.crop.x       = 0;
+    WorkingCopy.es.video.crop.y       = 0;
+    WorkingCopy.es.video.crop.width   = m_ResolutionX;
+    WorkingCopy.es.video.crop.height  = m_ResolutionY;    
 }
 void CH264Decoder::MMALsetOutputPortFormat( const mmal_msg_port_info_get_reply &OriginalPortInfo, mmal_msg_port_info_get_reply &WorkingCopy)
 {
@@ -587,80 +625,78 @@ void CH264Decoder::MMALsetOutputPortFormat( const mmal_msg_port_info_get_reply &
     WorkingCopy = OriginalPortInfo;
 
     // 2. Modify only writable fields for the output port
-    WorkingCopy.port.buffer_num                     = NUMBER_OUTPUTBUFFER;
-    WorkingCopy.port.buffer_size                    = m_OutputBufferSize;
+    WorkingCopy.port.buffer_num  = NUMBER_OUTPUTBUFFER;
+    WorkingCopy.port.buffer_size = m_OutputBufferSize;
 
-    WorkingCopy.format.encoding                     = MMAL_ENCODING_I420;
+    WorkingCopy.format.encoding  = MMAL_ENCODING_I420;
 
-    WorkingCopy.es.video.width                      = m_ResolutionX;
-    WorkingCopy.es.video.height                     = m_ResolutionY;
-    WorkingCopy.es.video.crop.x                     = 0;
-    WorkingCopy.es.video.crop.y                     = 0;
-    WorkingCopy.es.video.crop.width                 = m_ResolutionX;
-    WorkingCopy.es.video.crop.height                = m_ResolutionY;
+    WorkingCopy.es.video.width        = m_ResolutionX;
+    WorkingCopy.es.video.height       = m_ResolutionY;
+    WorkingCopy.es.video.crop.x       = 0;
+    WorkingCopy.es.video.crop.y       = 0;
+    WorkingCopy.es.video.crop.width   = m_ResolutionX;
+    WorkingCopy.es.video.crop.height  = m_ResolutionY;
 
     // leave all other fields from GET untouched
 }
-bool            CH264Decoder::SendPortWorkingCopy( u32 port_type, const mmal_msg_port_info_get_reply &WorkingCopy)
+bool CH264Decoder::SendPortWorkingCopy( u32 port_type, const mmal_msg_port_info_get_reply &WorkingCopy)
 {
-                // 1. Prepare MMAL header
-                mmal_msg_header tx_hdr              = {};
-                tx_hdr.magic                        = MMAL_MAGIC;
-                tx_hdr.type                         = MMAL_MSG_TYPE_PORT_INFO_SET;
-                tx_hdr.control_service              = 0;         // *** NEW TO MATCH THE DEFINITION!                
-                tx_hdr.context                      = NextTransId(m_TransactionId);
-                tx_hdr.status                       = 0;
-                tx_hdr.padding                      = 0;
+    // 1. Prepare MMAL header
+    mmal_msg_header tx_hdr = {};
+    tx_hdr.magic   = MMAL_MAGIC;
+    tx_hdr.type    = MMAL_MSG_TYPE_PORT_INFO_SET;
+    tx_hdr.context = NextTransId(m_TransactionId);
+    tx_hdr.status  = 0;
+    tx_hdr.padding = 0;
 
-                // 2. Fill tx_body from working copy
-                mmal_msg_port_info_set tx_body      = {};
-                tx_body.component_handle            = m_ComponentHandle;
-                tx_body.port_type                   = port_type;  // INPUT or OUTPUT
-                tx_body.port_index                  = 0;
+    // 2. Fill tx_body from working copy
+    mmal_msg_port_info_set tx_body = {};
+    tx_body.component_handle = m_ComponentHandle;
+    tx_body.port_type        = port_type;  // INPUT or OUTPUT
+    tx_body.port_index       = 0;
 
-                // copy all nested fields from working copy
-                memcpy(&tx_body.port,   &WorkingCopy.port,   sizeof(WorkingCopy.port));
-                memcpy(&tx_body.format, &WorkingCopy.format, sizeof(WorkingCopy.format));
-                memcpy(&tx_body.es,     &WorkingCopy.es,     sizeof(WorkingCopy.es));
+    // copy all nested fields from working copy
+    memcpy(&tx_body.port,   &WorkingCopy.port,   sizeof(WorkingCopy.port));
+    memcpy(&tx_body.format, &WorkingCopy.format, sizeof(WorkingCopy.format));
+    memcpy(&tx_body.es,     &WorkingCopy.es,     sizeof(WorkingCopy.es));
 
-                // 3. Compose full TX message
-                u8 tx_msg[sizeof(tx_hdr) + sizeof(tx_body)];
-                memcpy(tx_msg, &tx_hdr, sizeof(tx_hdr));
-                memcpy(tx_msg + sizeof(tx_hdr), &tx_body, sizeof(tx_body));
+    // 3. Compose full TX message
+    u8 tx_msg[sizeof(tx_hdr) + sizeof(tx_body)];
+    memcpy(tx_msg, &tx_hdr, sizeof(tx_hdr));
+    memcpy(tx_msg + sizeof(tx_hdr), &tx_body, sizeof(tx_body));
 
-                // 4. Send and wait for reply
-                u8 rx_msg[MMAL_MSG_MAX_SIZE] = {};
-                size_t rx_len = 0;
+    // 4. Send and wait for reply
+    u8 rx_msg[MMAL_MSG_MAX_SIZE] = {};
+    size_t rx_len = 0;
 
-                if (!MMALsendAndWait(tx_msg, sizeof(tx_msg), rx_msg, sizeof(rx_msg), &rx_len))
-                {
-                    MMALstoreLog("\nSend Port Copy Failed");
-                    return false;
-                }
+    if (!MMALsendAndWait(tx_msg, sizeof(tx_msg), rx_msg, sizeof(rx_msg), &rx_len))
+    {
+        MMALstoreLog("\nSend Port Copy Failed");
+        return false;
+    }
 
-                if (rx_len < sizeof(mmal_msg_header) + sizeof(mmal_msg_port_info_set_reply))
-                {
-                    MMALstoreLog("\nSend Port Copy Failed");
-                    return false;
-                }
+    if (rx_len < sizeof(mmal_msg_header) + sizeof(mmal_msg_port_info_set_reply))
+    {
+        MMALstoreLog("\nSend Port Copy Failed");
+        return false;
+    }
 
-                const mmal_msg_port_info_set_reply *reply =
-                    reinterpret_cast<const mmal_msg_port_info_set_reply *>(rx_msg + sizeof(mmal_msg_header));
+    const mmal_msg_port_info_set_reply *reply =
+        reinterpret_cast<const mmal_msg_port_info_set_reply *>(rx_msg + sizeof(mmal_msg_header));
 
-                MMALstoreLog("\nSend Port Copy Success", reply->format.type);
-                return (reply->status == MMAL_MSG_STATUS_SUCCESS);
+    MMALstoreLog("\nSend Port Copy Success", reply->format.type);
+    return (reply->status == MMAL_MSG_STATUS_SUCCESS);
 }
 bool            CH264Decoder::MMALenableComponent      (   )                                                    // mmal_msg_component_enable
 {
-                mmal_msg_header tx_hdr              = {};
-                tx_hdr.magic                        = MMAL_MAGIC;
-                tx_hdr.type                         = MMAL_MSG_TYPE_COMPONENT_ENABLE;
-                tx_hdr.control_service              = 0;         // *** NEW TO MATCH THE DEFINITION!                
-                tx_hdr.context                      = NextTransId(m_TransactionId);
-                tx_hdr.status                       = 0;
-                tx_hdr.padding                      = 0;
+                mmal_msg_header tx_hdr = {};
+                tx_hdr.magic                           = MMAL_MAGIC;
+                tx_hdr.type                            = MMAL_MSG_TYPE_COMPONENT_ENABLE;
+                tx_hdr.context                         = NextTransId(m_TransactionId);
+                tx_hdr.status                          = 0;
+                tx_hdr.padding                         = 0;
 
-                mmal_msg_component_enable tx_body   = {};
+                mmal_msg_component_enable tx_body = {};
                 tx_body.component_handle             = m_ComponentHandle;
 
                 u8 tx_msg[sizeof(tx_hdr) + sizeof(tx_body)] = {};
@@ -687,70 +723,172 @@ bool            CH264Decoder::MMALenableComponent      (   )                    
                 
                 return true; // (reply->status == MMAL_MSG_STATUS_SUCCESS);
 }
-bool            CH264Decoder::MMALenablePort(u32 port_handle, const mmal_msg_port_info_get_reply &port_info)
+bool CH264Decoder::MMALenablePort(u32 port_handle, const mmal_msg_port_info_get_reply &port_info)
 {
-                // Prepare MMAL header
-                mmal_msg_header tx_hdr = {};
-                tx_hdr.magic   = MMAL_MAGIC;
-                tx_hdr.type    = MMAL_MSG_TYPE_PORT_ACTION;
-                tx_hdr.control_service                 = 0;         // *** NEW TO MATCH THE DEFINITION!                
-                tx_hdr.context = NextTransId(m_TransactionId);
-                tx_hdr.status                          = 0;         // *** NEW TO MATCH THE DEFINITION!
-                tx_hdr.padding                         = 0;         // *** NEW TO MATCH THE DEFINITION!
+    // Prepare MMAL header
+    mmal_msg_header tx_hdr = {};
+    tx_hdr.magic   = MMAL_MAGIC;
+    tx_hdr.type    = MMAL_MSG_TYPE_PORT_ACTION;
+    tx_hdr.context = NextTransId(m_TransactionId);
 
-                // Use full port struct for enable
-                mmal_msg_port_action_port tx_body = {};
-                tx_body.component_handle         = m_ComponentHandle;
-                tx_body.port_handle              = port_handle;
-                tx_body.action                   = MMAL_MSG_PORT_ACTION_TYPE_ENABLE;
-                tx_body.port                     = port_info.port;
+    // Use full port struct for enable
+    mmal_msg_port_action_port tx_body = {};
+    tx_body.component_handle         = m_ComponentHandle;
+    tx_body.port_handle              = port_handle;
+    tx_body.action                   = MMAL_MSG_PORT_ACTION_TYPE_ENABLE;
+    tx_body.port                     = port_info.port;
 
-                // Combine header + body
-                u8 tx_msg[sizeof(tx_hdr) + sizeof(tx_body)];
-                memcpy(tx_msg, &tx_hdr, sizeof(tx_hdr));
-                memcpy(tx_msg + sizeof(tx_hdr), &tx_body, sizeof(tx_body));
+    // Combine header + body
+    u8 tx_msg[sizeof(tx_hdr) + sizeof(tx_body)];
+    memcpy(tx_msg, &tx_hdr, sizeof(tx_hdr));
+    memcpy(tx_msg + sizeof(tx_hdr), &tx_body, sizeof(tx_body));
 
-                // RX buffer
-                u8 rx_msg[MMAL_MSG_MAX_SIZE] = {};
-                size_t rx_len = 0;
+    // RX buffer
+    u8 rx_msg[MMAL_MSG_MAX_SIZE] = {};
+    size_t rx_len = 0;
 
-                // Send + wait
-                if (!MMALsendAndWait(tx_msg, sizeof(tx_msg), rx_msg, sizeof(rx_msg), &rx_len))
-                {
-                    MMALstoreLog("Enable Port Failed", port_handle);
-                    return false;
-                }
+    // Send + wait
+    if (!MMALsendAndWait(tx_msg, sizeof(tx_msg), rx_msg, sizeof(rx_msg), &rx_len))
+    {
+        MMALstoreLog("Enable Port Failed", port_handle);
+        return false;
+    }
 
-                // Parse reply
-                const mmal_msg_header *rx_hdr = reinterpret_cast<const mmal_msg_header *>(rx_msg);
-                if (rx_hdr->type != MMAL_MSG_TYPE_PORT_ACTION)
-                {
-                    MMALstoreLog("Enable Port Failed", port_handle);
-                    return false;
-                }
+    // Parse reply
+    const mmal_msg_header *rx_hdr = reinterpret_cast<const mmal_msg_header *>(rx_msg);
+    if (rx_hdr->type != MMAL_MSG_TYPE_PORT_ACTION)
+    {
+        MMALstoreLog("Enable Port Failed", port_handle);
+        return false;
+    }
 
-                const mmal_msg_port_action_reply *reply =
-                    reinterpret_cast<const mmal_msg_port_action_reply *>(rx_msg + sizeof(mmal_msg_header));
+    const mmal_msg_port_action_reply *reply =
+        reinterpret_cast<const mmal_msg_port_action_reply *>(rx_msg + sizeof(mmal_msg_header));
 
-                if (reply->status != MMAL_MSG_STATUS_SUCCESS)
-                {
-                    MMALstoreLog("Enable Port Failed", port_handle);
-                    return false;
-                }
+    if (reply->status != MMAL_MSG_STATUS_SUCCESS)
+    {
+        MMALstoreLog("Enable Port Failed", port_handle);
+        return false;
+    }
 
-                MMALstoreLog("Enable Port Success", port_handle);
-                return true;
+    MMALstoreLog("Enable Port Success", port_handle);
+    return true;
 }
 
+
+/*
+bool CH264Decoder::MMALenablePort(u32 port_handle)
+{
+    // Prepare MMAL header
+    mmal_msg_header tx_hdr = {};
+    tx_hdr.magic   = MMAL_MAGIC;
+    tx_hdr.type    = MMAL_MSG_TYPE_PORT_ACTION;
+    tx_hdr.context = NextTransId(m_TransactionId);
+
+    // Minimal enable request (no mmal_port struct!)
+    mmal_msg_port_action_handle tx_body = {};
+    tx_body.component_handle         = m_ComponentHandle;
+    tx_body.port_handle              = port_handle;
+    tx_body.action                   = MMAL_MSG_PORT_ACTION_TYPE_ENABLE;
+    tx_body.connect_component_handle = 0;
+    tx_body.connect_port_handle      = 0;
+
+    // Combine header + body
+    u8 tx_msg[sizeof(tx_hdr) + sizeof(tx_body)];
+    memcpy(tx_msg, &tx_hdr, sizeof(tx_hdr));
+    memcpy(tx_msg + sizeof(tx_hdr), &tx_body, sizeof(tx_body));
+
+    // RX buffer
+    u8 rx_msg[MMAL_MSG_MAX_SIZE] = {};
+    size_t rx_len = 0;
+
+    // Send + wait
+    if (!MMALsendAndWait(tx_msg, sizeof(tx_msg), rx_msg, sizeof(rx_msg), &rx_len))
+    {
+        MMALstoreLog("Enable Port Failed", port_handle);
+        return false;
+    }
+
+    // Parse reply
+    const mmal_msg_header *rx_hdr = reinterpret_cast<const mmal_msg_header *>(rx_msg);
+    if (rx_hdr->type != MMAL_MSG_TYPE_PORT_ACTION)
+    {
+        MMALstoreLog("Enable Port Failed", port_handle);
+        return false;
+    }
+
+    const mmal_msg_port_action_reply *reply =
+        reinterpret_cast<const mmal_msg_port_action_reply *>(rx_msg + sizeof(mmal_msg_header));
+
+    if (reply->status != MMAL_MSG_STATUS_SUCCESS)
+    {
+        MMALstoreLog("Enable Port Failed", port_handle);
+        return false;
+    }
+
+    MMALstoreLog("Enable Port Success", port_handle);
+    return true;
+}
+
+
+bool CH264Decoder::MMALenablePort(u32 port_handle)
+{
+    // 1. Prepare MMAL header
+    mmal_msg_header tx_hdr = {};
+    tx_hdr.magic   = MMAL_MAGIC;
+    tx_hdr.type    = MMAL_MSG_TYPE_PORT_ACTION;
+    tx_hdr.context = NextTransId(m_TransactionId);
+    tx_hdr.status  = 0;
+    tx_hdr.padding = 0;
+
+    // 2. Prepare minimal action body
+    mmal_msg_port_action_port tx_body = {};
+    tx_body.component_handle = m_ComponentHandle;                  // which component
+    tx_body.port_handle      = port_handle;                        // which port
+    tx_body.action           = MMAL_MSG_PORT_ACTION_TYPE_ENABLE;   // enable action
+
+    // 3. Compose full TX message
+    u8 tx_msg[sizeof(tx_hdr) + sizeof(tx_body)];
+    memcpy(tx_msg, &tx_hdr, sizeof(tx_hdr));
+    memcpy(tx_msg + sizeof(tx_hdr), &tx_body, sizeof(tx_body));
+
+    // 4. Send and wait for reply
+    u8 rx_msg[MMAL_MSG_MAX_SIZE] = {};
+    size_t rx_len = 0;
+
+    if (!MMALsendAndWait(tx_msg, sizeof(tx_msg), rx_msg, sizeof(rx_msg), &rx_len))
+    {
+        MMALstoreLog("\nEnable Port Failed");
+        return false;
+    }
+
+    if (rx_len < sizeof(mmal_msg_header) + sizeof(mmal_msg_port_action_reply))
+    {
+        MMALstoreLog("\nEnable Port Failed (reply too short)");
+        return false;
+    }
+
+    const mmal_msg_port_action_reply* reply =
+        reinterpret_cast<const mmal_msg_port_action_reply*>(
+            rx_msg + sizeof(mmal_msg_header));
+
+    if (reply->status != MMAL_MSG_STATUS_SUCCESS)
+    {
+        MMALstoreLog("\nEnable Port Failed (VC returned error)");
+        return false;
+    }
+
+    MMALstoreLog("\nEnable Port Success", (u32)port_handle);
+    return true;
+}
+*/
 bool            CH264Decoder::MMALsetZeroCopyMode      (   u32 port_handle)                                     // mmal_msg_port_parameter_set
 {
                 mmal_msg_header tx_hdr = {};
                 tx_hdr.magic   = MMAL_MAGIC;
                 tx_hdr.type    = MMAL_MSG_TYPE_PORT_PARAMETER_SET;
-                tx_hdr.control_service                 = 0;         // *** NEW TO MATCH THE DEFINITION!                    
                 tx_hdr.context = NextTransId(m_TransactionId);
                 tx_hdr.status  = 0;
-                tx_hdr.padding                         = 0;         // *** NEW TO MATCH THE DEFINITION!                
 
                 mmal_msg_port_parameter_set tx_body = {};
                 tx_body.component_handle = m_ComponentHandle;
@@ -789,7 +927,10 @@ bool            CH264Decoder::MMALsetZeroCopyMode      (   u32 port_handle)     
 }
 void            CH264Decoder::MMALinitialOutputBuffers (   )
 {
-                if(!MMALqueueOutputBuffer(m_OutputBufferHandleA, m_OutputBufferSize))
+                // Set up roles so both buffers get queued
+                m_AltVCSMHandle = m_VCSMHandleA;
+                m_AltBufferHandle = m_OutputBufferHandleA;
+                if(!MMALqueueOutputBuffer())
                     {
                     MMALstoreLog ( "\nInitial Output Port Queue Failed", (u32)m_OutputBufferHandleA);    
                     }
@@ -797,7 +938,9 @@ void            CH264Decoder::MMALinitialOutputBuffers (   )
                     {
                     MMALstoreLog ( "\nInitial Output Port Queue Success", (u32)m_OutputBufferHandleA);       
                     }
-                if (!MMALqueueOutputBuffer(m_OutputBufferHandleB, m_OutputBufferSize))
+                m_AltVCSMHandle = m_VCSMHandleB;
+                m_AltBufferHandle = m_OutputBufferHandleB;
+                if(!MMALqueueOutputBuffer())
                     {
                     MMALstoreLog ( "\nInitial Output Port Queue Failed", (u32)m_OutputBufferHandleB);    
                     }
@@ -872,99 +1015,161 @@ bool            CH264Decoder::MMALcreateTextures       (   )
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              H264 Decoder Runtime Code
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-bool            CH264Decoder::MMALbufferReady()
+bool CH264Decoder::MMALbufferReady()
 {
-                // For buffer A or B, the logic now alternates which EGLImage is created
-                struct egl_image_brcm_vcsm_info info =  {
-                                                        .width = m_ResolutionX,
-                                                        .height = m_ResolutionY,
-                                                        .vcsm_handle = m_CurrentVCSMHandle // set earlier in MMALFramePoller
-                                                        };
+    // For buffer A or B, the logic now alternates which EGLImage is created
+    struct egl_image_brcm_vcsm_info info = {
+        .width = m_ResolutionX,
+        .height = m_ResolutionY,
+        .vcsm_handle = m_CurrentVCSMHandle // set earlier in MMALFramePoller
+    };
 
-                if (m_CurrentTextureIndex == 0)
+    if (m_CurrentTextureIndex == 0)
+    {
+        if (m_EGLimageA)
+        {
+            eglDestroyImageKHR(m_eglDisplay, m_EGLimageA);
+            m_EGLimageA = EGL_NO_IMAGE_KHR;
+        }
+
+        m_EGLimageA = eglCreateImageKHR(
+            m_eglDisplay,
+            m_eglContext,
+            EGL_IMAGE_BRCM_VCSM,
+            (EGLClientBuffer)&info,
+            NULL
+        );
+
+        if (m_EGLimageA == EGL_NO_IMAGE_KHR)
+        {
+            MMALstoreLog("\nm_EGLimageA Failed");
+            return false;
+        }
+
+        glBindTexture(GL_TEXTURE_2D, m_TextureA);
+        glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, m_EGLimageA);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    else
+    {
+        if (m_EGLimageB)
+        {
+            eglDestroyImageKHR(m_eglDisplay, m_EGLimageB);
+            m_EGLimageB = EGL_NO_IMAGE_KHR;
+        }
+
+        m_EGLimageB = eglCreateImageKHR(
+            m_eglDisplay,
+            m_eglContext,
+            EGL_IMAGE_BRCM_VCSM,
+            (EGLClientBuffer)&info,
+            NULL
+        );
+
+        if (m_EGLimageB == EGL_NO_IMAGE_KHR)
+        {
+            MMALstoreLog("\nm_EGLimageB Failed");
+            return false;
+        }
+
+        glBindTexture(GL_TEXTURE_2D, m_TextureA); // <-- always bind m_TextureA
+        glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, m_EGLimageB);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
+//  MMALstoreLog("\neglImage Success");
+
+    m_CurrentTextureIndex ^= 1; // Toggle for next call
+
+    return true;
+}
+
+/*
+bool            CH264Decoder::MMALbufferReady          (   )
+{
+                // For buffer A:
+                if (m_CurrentVCSMHandle == m_VCSMHandleA) 
                     {
-                    if (m_EGLimageA)
+                    if (m_EGLimageA) 
                         {
                         eglDestroyImageKHR(m_eglDisplay, m_EGLimageA);
                         m_EGLimageA = EGL_NO_IMAGE_KHR;
                         }
-
-                    m_EGLimageA = eglCreateImageKHR (
-                                                    m_eglDisplay,
+                    struct egl_image_brcm_vcsm_info info = 
+                        {
+                        .width = m_ResolutionX,
+                        .height = m_ResolutionY,
+                        .vcsm_handle = m_VCSMHandleA,
+                        };
+                    m_EGLimageA = eglCreateImageKHR(  m_eglDisplay,
                                                     m_eglContext,
                                                     EGL_IMAGE_BRCM_VCSM,
                                                     (EGLClientBuffer)&info,
-                                                    NULL
-                                                    );
-
-                    if (m_EGLimageA == EGL_NO_IMAGE_KHR)
+                                                    NULL);
+                    if (m_EGLimageA == EGL_NO_IMAGE_KHR) 
                         {
-                        MMALstoreLog("\nm_EGLimageA Failed");
+                        MMALstoreLog ( "\nm_EGLimageA Failed");                                 
                         return false;
                         }
-
                     glBindTexture(GL_TEXTURE_2D, m_TextureA);
                     glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, m_EGLimageA);
                     glBindTexture(GL_TEXTURE_2D, 0);
                     }
-                else
+                // For buffer B:
+                else 
                     {
-                    if (m_EGLimageB)
+                    if (m_EGLimageB) 
                         {
                         eglDestroyImageKHR(m_eglDisplay, m_EGLimageB);
                         m_EGLimageB = EGL_NO_IMAGE_KHR;
                         }
-
-                    m_EGLimageB = eglCreateImageKHR (
-                                                    m_eglDisplay,
+                    struct egl_image_brcm_vcsm_info info = 
+                        {
+                        .width = m_ResolutionX,
+                        .height = m_ResolutionY,
+                        .vcsm_handle = m_VCSMHandleB,
+                        };
+                    m_EGLimageB = eglCreateImageKHR(  m_eglDisplay,
                                                     m_eglContext,
                                                     EGL_IMAGE_BRCM_VCSM,
                                                     (EGLClientBuffer)&info,
-                                                    NULL
-                                                    );
-
-                    if (m_EGLimageB == EGL_NO_IMAGE_KHR)
+                                                    NULL);
+                    if (m_EGLimageB == EGL_NO_IMAGE_KHR) 
                         {
-                        MMALstoreLog("\nm_EGLimageB Failed");
+                        MMALstoreLog ( "\nm_EGLimageB Failed");                                 
                         return false;
                         }
-
-                    glBindTexture(GL_TEXTURE_2D, m_TextureA); // <-- always bind m_TextureA
+                    glBindTexture(GL_TEXTURE_2D, m_TextureB);
                     glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, m_EGLimageB);
                     glBindTexture(GL_TEXTURE_2D, 0);
                     }
+                MMALstoreLog ( "\neglImage Success");     
 
-            //  MMALstoreLog("\neglImage Success");
-
-                m_CurrentTextureIndex ^= 1; // Toggle for next call
-
-                return true;
+                return true;    // please the compiler!!!!
 }
-
-bool            CH264Decoder::MMALqueueOutputBuffer(u32 vc_handle, u32 alloc_size) // mmal_msg_buffer_from_host
+*/                
+bool            CH264Decoder::MMALqueueOutputBuffer    (   )    // mmal_msg_buffer_from_host
 {
                 mmal_msg_header tx_hdr = {};
-                tx_hdr.magic                        = MMAL_MAGIC;
-                tx_hdr.type                         = MMAL_MSG_TYPE_BUFFER_FROM_HOST;
-                tx_hdr.control_service              = 0;         // *** NEW TO MATCH THE DEFINITION!                    
-                tx_hdr.context                      = NextTransId(m_TransactionId);
-                tx_hdr.status                       = 0;
-                tx_hdr.padding                      = 0;         // *** NEW TO MATCH THE DEFINITION!                          
+                tx_hdr.magic      = MMAL_MAGIC;
+                tx_hdr.type       = MMAL_MSG_TYPE_BUFFER_FROM_HOST;
+                tx_hdr.context    = NextTransId(m_TransactionId);
+                tx_hdr.status     = 0;
 
-                mmal_msg_buffer_from_host tx_body   = {};
-                tx_body.drvbuf.magic                = MMAL_MAGIC;
-                tx_body.drvbuf.component_handle     = m_ComponentHandle;
-                tx_body.drvbuf.port_handle          = m_OutputPortHandle;
-                tx_body.drvbuf.client_context       = 0;
+                mmal_msg_buffer_from_host tx_body = {};
+                tx_body.drvbuf.magic             = MMAL_MAGIC;
+                tx_body.drvbuf.component_handle  = m_ComponentHandle;
+                tx_body.drvbuf.port_handle       = m_OutputPortHandle;
+                tx_body.drvbuf.client_context    = 0;
 
-                tx_body.buffer_header.cmd           = 0;
-                tx_body.buffer_header.data          = vc_handle;
-                tx_body.buffer_header.alloc_size    = alloc_size;
-                tx_body.buffer_header.length        = 0;
-                tx_body.buffer_header.offset        = 0;
-                tx_body.buffer_header.flags         = 0;
-                tx_body.buffer_header.pts           = MMAL_TIME_UNKNOWN;
-                tx_body.buffer_header.dts           = MMAL_TIME_UNKNOWN;
+                tx_body.buffer_header.cmd        = 0;
+                tx_body.buffer_header.data       = m_AltVCSMHandle;
+                tx_body.buffer_header.alloc_size = m_OutputBufferSize;
+                tx_body.buffer_header.length     = 0;
+                tx_body.buffer_header.offset     = 0;
+                tx_body.buffer_header.flags      = 0;
+                tx_body.buffer_header.pts        = MMAL_TIME_UNKNOWN;
+                tx_body.buffer_header.dts        = MMAL_TIME_UNKNOWN;
 
                 memset(&tx_body.buffer_header_type_specific, 0, sizeof(tx_body.buffer_header_type_specific));
                 tx_body.payload_in_message = 0;
@@ -988,29 +1193,27 @@ bool            CH264Decoder::MMALqueueOutputBuffer(u32 vc_handle, u32 alloc_siz
 bool            CH264Decoder::MMALqueueInputFrame      (   u32 frame_offset, u32 frame_length)  // mmal_msg_buffer_from_host
 {
             // 1. MMAL header
-                mmal_msg_header tx_hdr              = {};
-                tx_hdr.magic                        = MMAL_MAGIC;
-                tx_hdr.type                         = MMAL_MSG_TYPE_BUFFER_FROM_HOST;
-                tx_hdr.control_service              = 0;         // *** NEW TO MATCH THE DEFINITION!                     
-                tx_hdr.context                      = 0;
-                tx_hdr.status                       = 0;
-                tx_hdr.padding                      = 0;         // *** NEW TO MATCH THE DEFINITION!                    
+                mmal_msg_header tx_hdr = {};
+                tx_hdr.magic   = MMAL_MAGIC;
+                tx_hdr.type    = MMAL_MSG_TYPE_BUFFER_FROM_HOST;
+                tx_hdr.context = 0;
+                tx_hdr.status  = 0;
             // 2. MMAL buffer message tx_body (all fields shown)
-                mmal_msg_buffer_from_host tx_body   = {};
+                mmal_msg_buffer_from_host tx_body = {};
                 // drvbuf
-                tx_body.drvbuf.magic                = MMAL_MAGIC;
-                tx_body.drvbuf.component_handle     = m_ComponentHandle;
-                tx_body.drvbuf.port_handle          = m_InputPortHandle;
-                tx_body.drvbuf.client_context       = 0;
+                tx_body.drvbuf.magic            = MMAL_MAGIC;
+                tx_body.drvbuf.component_handle = m_ComponentHandle;
+                tx_body.drvbuf.port_handle      = m_InputPortHandle;
+                tx_body.drvbuf.client_context   = 0;
                 // buffer_header
-                tx_body.buffer_header.cmd           = 0;
-                tx_body.buffer_header.data          = m_InputBufferHandle;         // This is your input VCSM/VC handle
-                tx_body.buffer_header.alloc_size    = m_InputBufferSize;         // Full input buffer size (e.g. 80 MB)
-                tx_body.buffer_header.length        = frame_length;        // Bytes of this frame
-                tx_body.buffer_header.offset        = frame_offset;        // Offset within the buffer to the current frame
-                tx_body.buffer_header.flags         = MMAL_BUFFER_HEADER_FLAG_KEYFRAME | MMAL_BUFFER_HEADER_FLAG_FRAME;         // MMAL_BUFFER_HEADER_FLAG_KEYFRAME | MMAL_BUFFER_HEADER_FLAG_FRAME
-                tx_body.buffer_header.pts           = MMAL_TIME_UNKNOWN;
-                tx_body.buffer_header.dts           = MMAL_TIME_UNKNOWN;
+                tx_body.buffer_header.cmd         = 0;
+                tx_body.buffer_header.data        = m_InputBufferHandle;         // This is your input VCSM/VC handle
+                tx_body.buffer_header.alloc_size  = m_InputBufferSize;         // Full input buffer size (e.g. 80 MB)
+                tx_body.buffer_header.length      = frame_length;        // Bytes of this frame
+                tx_body.buffer_header.offset      = frame_offset;        // Offset within the buffer to the current frame
+                tx_body.buffer_header.flags       = MMAL_BUFFER_HEADER_FLAG_KEYFRAME | MMAL_BUFFER_HEADER_FLAG_FRAME;         // MMAL_BUFFER_HEADER_FLAG_KEYFRAME | MMAL_BUFFER_HEADER_FLAG_FRAME
+                tx_body.buffer_header.pts         = MMAL_TIME_UNKNOWN;
+                tx_body.buffer_header.dts         = MMAL_TIME_UNKNOWN;
 
                 memset(&tx_body.buffer_header_type_specific, 0, sizeof(tx_body.buffer_header_type_specific));
                 tx_body.payload_in_message = 0;

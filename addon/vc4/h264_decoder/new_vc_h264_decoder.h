@@ -84,7 +84,7 @@ static  void    MMALcallBack                                (   void *callback_p
 //              H264 Decoder Runtime Code
 //----------------------------------------------------------------------------------------------------------------------------------------------------        
         bool    MMALbufferReady                             (   ); 
-        bool    MMALqueueOutputBuffer                       (   u32 vc_handle, u32 alloc_size);                                                      // MMALsendAndWait mmal_msg_buffer_from_host
+        bool    MMALqueueOutputBuffer                       (   );                                                      // MMALsendAndWait mmal_msg_buffer_from_host
         bool    MMALqueueInputFrame                         (   u32 frame_offset, u32 frame_length);                    // MMALsendAndWait mmal_msg_buffer_from_host
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              MEMBER VARIABLES
@@ -120,9 +120,6 @@ static  void    MMALcallBack                                (   void *callback_p
         u32                                                 m_OutputBufferHandleA;
         u32                                                 m_OutputBufferHandleB;
 
-        u32                                                 m_OutputBufferPointerA;
-        u32                                                 m_OutputBufferPointerB;
-
         u32                                                 m_InputBufferSize;
         u32                                                 m_OutputBufferSize;
 
@@ -138,9 +135,9 @@ static  void    MMALcallBack                                (   void *callback_p
         u32                                                 m_VCSMHandleB = 0;
 
         u32                                                 m_CurrentVCSMHandle = 0;
-//      u32                                                 m_AltVCSMHandle = 0;
+        u32                                                 m_AltVCSMHandle = 0;
         u32                                                 m_CurrentBufferHandle = 0;
-//      u32                                                 m_AltBufferHandle = 0;
+        u32                                                 m_AltBufferHandle = 0;
 public:
         u32                                                 m_CharIndex = 0;
         char                                                m_DebugCharArray[MMAL_MAX_DEBUG_FILE_LENGTH] = { 0 }; // is exposed for 

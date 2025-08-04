@@ -42,7 +42,8 @@ public:
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              USER API
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-bool            ParseInitialize                         (       int             max_textures,
+bool            ParseInitialize                         (       char*           blockSize,
+                                                                int             max_textures,
                                                                 u32             max_tex_size,
                                                                 int             max_videos,  
                                                                 int             max_frames,
@@ -109,7 +110,8 @@ public:
                                                                                         // Indexed by [video_index][frame_index]
         size_t  m_framelenght[MAX_VIDEOS][MAX_FRAMES];                                  // Length (in bytes) of each parsed IDR frame
                                                                                         // Indexed by [video_index][frame_index]    
-        size_t  m_idr_offset[MAX_VIDEOS];
+        size_t m_frameOffset[MAX_VIDEOS][MAX_FRAMES];
+                                                                                        size_t  m_idr_offset[MAX_VIDEOS];
         int     m_frame_count[MAX_VIDEOS];                                              // Number of IDR frames found for this video stream
         // ---------------- Extradata (SPS+PPS) per stream --------------------------------------------------------------------------------------------------------------------
         u8      m_extradata[MAX_VIDEOS][MMAL_FORMAT_EXTRADATA_MAX_SIZE];                // Raw Annex-B extradata buffer containing SPS+PPS for each video stream
@@ -126,6 +128,9 @@ public:
         u16     m_tex_width[MAX_TEXTURES];                                              // decoded width from the BMP header
         u16     m_tex_height[MAX_TEXTURES];                                             // decoded height from the BMP header
         u32     m_tex_image_size[MAX_TEXTURES];                                         // decoded image-data byte count (width×height×3)
+
+        char*  m_videoBlockBase;
+
 };
 
 /*

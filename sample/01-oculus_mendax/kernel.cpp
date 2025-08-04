@@ -132,7 +132,8 @@ boolean         CKernel::Initialize (void)
 TShutdownMode   CKernel::Run(void)
 {
             m_Timer.MsDelay(500);
-m_H264Decoder.MMALinitialize           (                                m_VCSMinputHandle,         // my input buffer handle from smem
+/*
+            m_H264Decoder.MMALinitialize           (                                m_VCSMinputHandle,         // my input buffer handle from smem
                                                                         m_videoBlockSize,           // my allocated input buffer size 
                                                                         m_VCSMoutputHandleA,       // my output buffer handle a from smem 
                                                                         m_VCSMoutputHandleB,       // my output buffer handle b from smem
@@ -141,9 +142,19 @@ m_H264Decoder.MMALinitialize           (                                m_VCSMin
                                                                         VIDEO_HEIGHT, 
                                                                         state.display,      // <-- add this
                                                                         state.context);       // <-- and this)
+*/
+m_H264Decoder.MMALinitialize (  m_SharedMemory.m_vc_handle[0],
+                                m_videoBlockSize,
+                                m_SharedMemory.m_vc_handle[1],
+                                m_SharedMemory.m_vc_handle[2],
+                                m_frameBlockSizeA,
+                                VIDEO_WIDTH,
+                                VIDEO_HEIGHT, 
+                                state.display,      // <-- add this
+                                state.context);     // <-- and this
 
-                CString test;
-                CString test1;
+//              CString test;
+//              CString test1;
 
                 util_prep_parameters();
                 
@@ -155,7 +166,8 @@ m_H264Decoder.MMALinitialize           (                                m_VCSMin
                     return ShutdownReboot;      // If the update was successful, proceed with reboot
                     }
 
-            m_H264Parser.ParseInitialize(   8,                      // 
+            m_H264Parser.ParseInitialize(   m_videoBlockBase,
+                                            8,                      // 
                                             TEX_SIZE, 
                                             8, 
                                             MAX_FRAMES, 
@@ -163,6 +175,9 @@ m_H264Decoder.MMALinitialize           (                                m_VCSMin
                                             VIDEO_HEIGHT, 
                                             BASELINE_PROFILE, 
                                             41 );            
+
+                m_H264Decoder.MMALcreateTextures(); // Initialize m_TextureA (and B internally)
+
 
                 m_Timer.MsDelay(500);
 
@@ -181,7 +196,7 @@ m_H264Decoder.MMALinitialize           (                                m_VCSMin
                     gfx_init_fshaders(&state, FSH_LOADED_OLD, FSH_LOADED_NEW);
                     gfx_init_programs(&state, FSH_LOADED_OLD, FSH_LOADED_NEW);
                     gfx_init_uniforms(&state, FSH_LOADED_OLD, FSH_LOADED_NEW);
-                    gfx_init_textures(&state, TEX_LOADED_OLD, TEX_LOADED_NEW);
+                //  gfx_init_textures(&state, TEX_LOADED_OLD, TEX_LOADED_NEW);
 
                     m_Watchdog.Start(TIMEOUT);
 
@@ -220,7 +235,7 @@ m_H264Decoder.MMALinitialize           (                                m_VCSMin
                             gfx_init_fshaders(&state, FSH_LOADED_OLD, FSH_LOADED_NEW);
                             gfx_init_programs(&state, FSH_LOADED_OLD, FSH_LOADED_NEW);
                             gfx_init_uniforms(&state, FSH_LOADED_OLD, FSH_LOADED_NEW);
-                            gfx_init_textures(&state, TEX_LOADED_OLD, TEX_LOADED_NEW); 
+                        //  gfx_init_textures(&state, TEX_LOADED_OLD, TEX_LOADED_NEW); 
 
                             filesystem_save_log_file( "umsd1-1", FILENAME_GL_LOG, g_log_string);
 

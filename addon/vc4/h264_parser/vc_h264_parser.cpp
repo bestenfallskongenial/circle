@@ -19,7 +19,8 @@ CH264Parser::~CH264Parser(void)
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              USER API
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-bool    CH264Parser::ParseInitialize (  int         max_textures,
+bool    CH264Parser::ParseInitialize (  char*      blockBase,
+                                        int         max_textures,
                                         u32         max_tex_size,
                                         int         max_videos,  
                                         int         max_frames,
@@ -28,6 +29,7 @@ bool    CH264Parser::ParseInitialize (  int         max_textures,
                                         u8          max_profile,
                                         u8          max_level)
 {
+    m_videoBlockBase = blockBase;
     m_max_textures = max_textures;
     m_max_tex_size = max_tex_size;
 
@@ -42,6 +44,7 @@ bool    CH264Parser::ParseInitialize (  int         max_textures,
 
     return true;
 }
+
 bool CH264Parser::ParseVideoAuto( int file_index, char* buffer_array[], size_t size_array[])
 {
     if (size_array[file_index] < 8) return false;
@@ -182,7 +185,7 @@ bool CH264Parser::ParseAnnexB(    int     file_index, char*   buffer_array[], si
             }
         size_t sc_len = (data[pos + 2] == 1) ? 3 : 4;
         u8 nal_type = data[pos + sc_len] & 0x1F;
-
+    //  size_t buffer_size = (size_t) buffer_block_start;
         if (nal_type == NAL_TYPE_SPS)                                                                               // record SPS position
             {
             last_sps_pos = pos;
@@ -190,7 +193,8 @@ bool CH264Parser::ParseAnnexB(    int     file_index, char*   buffer_array[], si
 
         if (nal_type == NAL_TYPE_IDR) 
             {
-            m_frame_address[file_index][frame_idx] = (void*)(data + last_sps_pos);                                  // store SPS addr
+            m_frame_address [file_index][frame_idx] = (void*)(data + last_sps_pos);
+            m_frameOffset[file_index][frame_idx] = (size_t)((data + last_sps_pos) - (u8*)m_videoBlockBase);   // store SPS addr
             size_t next_pos = FindNextStartCode(data, pos + sc_len, size);
             if (next_pos < size)
                 {
@@ -201,7 +205,7 @@ bool CH264Parser::ParseAnnexB(    int     file_index, char*   buffer_array[], si
                 m_framelenght[file_index][frame_idx] = size - last_sps_pos;
                 }
             m_idr_offset[file_index] = pos - last_sps_pos;                                                          // SPS→IDR offset
-            ParserStoreLog(file_index,"SPS+PPS+IDR addr/len", (u32)m_frame_address[file_index][frame_idx], (u32)m_framelenght[file_index][frame_idx]);
+            ParserStoreLog(file_index,"SPS+PPS+IDR addr/len/off ", (u32)m_frame_address[file_index][frame_idx], (u32)m_framelenght[file_index][frame_idx], (u32)m_frameOffset[file_index][frame_idx]);
             frame_idx++;
             pos = next_pos;
             }

@@ -519,7 +519,7 @@ void            CKernel::gfx_render_shader_a        (   CUBE_STATE_T *state)
                                                                         output_float_value[6], 
                                                                         output_float_value[7]);
                 if(state->u_tex_l[gl_current_prg] != -1) glUniform1i(   state->u_tex_l[gl_current_prg], m_validTextureCount);
-
+/*
                 switch(mode_storage_buffers[TEX_MODE][current_buffer]) 
                     {
                     case false:     // Original mode
@@ -565,6 +565,14 @@ void            CKernel::gfx_render_shader_a        (   CUBE_STATE_T *state)
                             }
                         break;
                     }
+*/  
+
+// debug code start
+glActiveTexture(GL_TEXTURE0);
+glBindTexture(GL_TEXTURE_2D, m_H264Decoder.m_TextureA);
+if (state->u_tex_id[gl_current_prg][0] != -1)
+    glUniform1i(state->u_tex_id[gl_current_prg][0], 0);
+// debug code end 
 
                 glDrawArrays( GL_TRIANGLE_FAN, 0, 4 );
             //  check();
