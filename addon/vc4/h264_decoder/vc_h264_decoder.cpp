@@ -46,8 +46,7 @@ extern "C" void vc_host_get_vchi_state(VCHI_INSTANCE_T *inst, VCHI_CONNECTION_T 
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              USER API
 //----------------------------------------------------------------------------------------------------------------------------------------------------
-bool            CH264Decoder::MMALinitialize           (    u32 blockSize,
-                                                            u32 InBufferHandle,         // my input buffer handle from smem
+bool            CH264Decoder::MMALinitialize           (    u32 InBufferHandle,         // my input buffer handle from smem
                                                             u32 InBufferSize,           // my allocated input buffer size 
                                                             u32 OutBufferHandleA,       // my output buffer handle a from smem 
                                                             u32 OutBufferHandleB,       // my output buffer handle b from smem
@@ -57,7 +56,7 @@ bool            CH264Decoder::MMALinitialize           (    u32 blockSize,
                                                             EGLDisplay eglDisplay,      // EGL display connection
                                                             EGLContext eglContext)      // EGL rendering context
 {
-                m_blockSize                         = blockSize                      
+                    
                 m_InputBufferHandle                 = InBufferHandle;
                 m_OutputBufferHandleA               = OutBufferHandleA;
                 m_OutputBufferHandleB               = OutBufferHandleB;
@@ -71,6 +70,12 @@ bool            CH264Decoder::MMALinitialize           (    u32 blockSize,
                 m_eglDisplay                        = eglDisplay;
                 m_eglContext                        = eglContext;
 
+            MMALstoreLog ( "\n----------------------------------------------------------------");
+            MMALstoreLog ( "Input Port Handle / Input Port Size",m_InputBufferHandle, m_InputBufferSize);
+            MMALstoreLog ( "Output A Port Handle / Input A Port Size",m_OutputBufferHandleA, m_OutputBufferSize);
+            MMALstoreLog ( "Output B Port Handle / Input B Port Size",m_OutputBufferHandleB, m_OutputBufferSize);            
+            MMALstoreLog ( "Resolution X/Y",m_ResolutionX, m_ResolutionY);
+            MMALstoreLog ( "EGL Display / EGL Contex", (u32)m_eglDisplay, (u32)m_eglContext);
             MMALstoreLog ( "\n----------------------------------------------------------------");      
             MMALstoreLog ( "init/setup service");     
                 GetVCHIstate                ();      // initialize and bind to VCHI instance
@@ -112,26 +117,28 @@ bool            CH264Decoder::MMALinitialize           (    u32 blockSize,
             MMALstoreLog ( "verify post-enable port state");              
                 MMALgetPortInfo             (   MMAL_PORT_TYPE_INPUT , m_InputPortHandle , m_InputPortInfoReply);
                 MMALgetPortInfo             (   MMAL_PORT_TYPE_OUTPUT, m_OutputPortHandle, m_OutputPortInfoReply);
-            MMALstoreLog ( "\n----------------------------------------------------------------");                 
-            MMALstoreLog ( "init Output Textures");                              
-                MMALcreateTextures          ();      // allocate and bind EGLImage textures
-                MMALstoreLog ( "\n----------------------------------------------------------------");                 
+            MMALstoreLog ( "\n----------------------------------------------------------------");                                  
             MMALstoreLog ( "init Output Ports");              
                 MMALinitialOutputBuffers    ();      // queue initial output buffers to VC
-return true; // <- early exit we are debugging  
-
-
-                return true;
+            MMALstoreLog ( "\n----------------------------------------------------------------");
+            MMALstoreLog ( "init Output Textures");                              
+                MMALcreateTextures          ();      // allocate and bind EGLImage textures
+                return true; // <- early exit we are debugging         
 }
 
 bool            CH264Decoder::MMALFramePoller          (    u32 frame_offset, u32 frame_length)
 {
                 CString message = "";
-
-                if (vcos_event_wait(&m_VCOSevent) != VCOS_SUCCESS)
+                if (vcos_event_try(&m_VCOSevent) == VCOS_EAGAIN)
+                    {
+                    return true; // nothing to process, not an error
+                    }
+/*
+                if (vcos_event_try(&m_VCOSevent) != VCOS_SUCCESS) // was vcos_event_wait
                     {
                     return false;
                     }
+*/
                 mmal_msg rx_msg = {};
                 uint32_t msg_len = 0;
                 if (vchi_msg_dequeue(m_ServiceHandle, &rx_msg, sizeof(rx_msg), &msg_len, VCHI_FLAGS_NONE) != 0)
@@ -161,7 +168,7 @@ bool            CH264Decoder::MMALFramePoller          (    u32 frame_offset, u3
 
                 //      MMALqueueOutputBuffer();
 
-                        MMALqueueInputFrame(frame_offset, frame_length);
+                        MMALqueueInputBuffer(frame_offset, frame_length);
 
                                                        message = "MMAL_MSG_STATUS_SUCCESS      - All is Fine";
                         MMALstoreLog(message, frame_offset, frame_length);     
@@ -741,7 +748,6 @@ bool            CH264Decoder::MMALenablePort(u32 port_handle, const mmal_msg_por
                 MMALstoreLog("Enable Port Success", port_handle);
                 return true;
 }
-
 bool            CH264Decoder::MMALsetZeroCopyMode      (   u32 port_handle)                                     // mmal_msg_port_parameter_set
 {
                 mmal_msg_header tx_hdr = {};
@@ -837,37 +843,42 @@ inline bool CH264Decoder::CheckGLError()
 
 bool            CH264Decoder::MMALcreateTextures       (   )
 {
+        int count = 0;
                 glGenTextures(1, &m_TextureA);
-                // CheckGLError();
+                if(!CheckGLError()) count++;
                 glBindTexture(GL_TEXTURE_2D, m_TextureA);
-                // CheckGLError();
+                if(!CheckGLError()) count++;
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                // CheckGLError();
+                if(!CheckGLError()) count++;
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                // CheckGLError();
+                if(!CheckGLError()) count++;
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                // CheckGLError();
+                if(!CheckGLError()) count++;
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-                // CheckGLError();
+                if(!CheckGLError()) count++;
                 glBindTexture(GL_TEXTURE_2D, 0);
-                // CheckGLError();
+                if(!CheckGLError()) count++;
 
                 glGenTextures(1, &m_TextureB);
-                // CheckGLError();
+                if(!CheckGLError()) count++;
                 glBindTexture(GL_TEXTURE_2D, m_TextureB);
-                // CheckGLError();
+                if(!CheckGLError()) count++;
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                // CheckGLError();
+                if(!CheckGLError()) count++;
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                // CheckGLError();
+                if(!CheckGLError()) count++;
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                // CheckGLError();
+                if(!CheckGLError()) count++;
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-                // CheckGLError();
+                if(!CheckGLError()) count++;
                 glBindTexture(GL_TEXTURE_2D, 0);
-                // CheckGLError();
-
+                if(!CheckGLError()) count++;
+            if( count == 0)
+                { 
+                MMALstoreLog("\nTexture Creation Failed");
                 return true;
+                }
+            return false;
 }
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              H264 Decoder Runtime Code
@@ -941,6 +952,33 @@ bool            CH264Decoder::MMALbufferReady()
                 return true;
 }
 
+bool CH264Decoder::MMALqueueOutputBuffer(u32 vc_handle, u32 alloc_size)
+{
+    mmal_msg_header tx_hdr = {};
+    tx_hdr.magic = MMAL_MAGIC;
+    tx_hdr.type  = MMAL_MSG_TYPE_BUFFER_FROM_HOST;
+
+    mmal_msg_buffer_from_host tx_body = {};
+    tx_body.drvbuf.magic            = MMAL_MAGIC;
+    tx_body.drvbuf.component_handle = m_ComponentHandle;
+    tx_body.drvbuf.port_handle      = m_OutputPortHandle;
+    tx_body.buffer_header.data      = vc_handle;
+    tx_body.buffer_header.alloc_size= alloc_size;
+    tx_body.buffer_header.pts       = MMAL_TIME_UNKNOWN;
+    tx_body.buffer_header.dts       = MMAL_TIME_UNKNOWN;
+
+    u8 tx_msg[sizeof(tx_hdr) + sizeof(tx_body)];
+    memcpy(tx_msg, &tx_hdr, sizeof(tx_hdr));
+    memcpy(tx_msg + sizeof(tx_hdr), &tx_body, sizeof(tx_body));
+    if(vchi_msg_queue(m_ServiceHandle, tx_msg, sizeof(tx_msg), VCHI_FLAGS_BLOCK_UNTIL_QUEUED, nullptr))
+        {
+        MMALstoreLog ( "\nOutput Port Queue Failed", (u32)vc_handle);  
+        return false;
+        }
+    return true;
+//  return (vchi_msg_queue(m_ServiceHandle, tx_msg, sizeof(tx_msg), VCHI_FLAGS_NONE, nullptr) == 0);
+}
+/*
 bool            CH264Decoder::MMALqueueOutputBuffer(u32 vc_handle, u32 alloc_size) // mmal_msg_buffer_from_host
 {
                 mmal_msg_header tx_hdr = {};
@@ -985,6 +1023,44 @@ bool            CH264Decoder::MMALqueueOutputBuffer(u32 vc_handle, u32 alloc_siz
                 MMALstoreLog ( "\nOutput Port Queue Success", (u32)m_OutputPortHandle);                     
                 return true;
 }
+*/
+bool CH264Decoder::MMALqueueInputBuffer(u32 frame_offset, u32 frame_length)
+{
+    // Bounds check
+    if (frame_offset + frame_length > m_InputBufferSize)
+        return false;
+
+    mmal_msg_header tx_hdr = {};
+    tx_hdr.magic = MMAL_MAGIC;
+    tx_hdr.type  = MMAL_MSG_TYPE_BUFFER_FROM_HOST;
+    // Optional: tx_hdr.context = NextTransId(...);
+
+    mmal_msg_buffer_from_host tx_body = {};
+    tx_body.drvbuf.magic             = MMAL_MAGIC;
+    tx_body.drvbuf.component_handle  = m_ComponentHandle;
+    tx_body.drvbuf.port_handle       = m_InputPortHandle;
+
+    tx_body.buffer_header.data       = m_InputBufferHandle;
+    tx_body.buffer_header.alloc_size = m_InputBufferSize;
+    tx_body.buffer_header.offset     = frame_offset;
+    tx_body.buffer_header.length     = frame_length;
+    tx_body.buffer_header.flags      = MMAL_BUFFER_HEADER_FLAG_FRAME |
+                                       MMAL_BUFFER_HEADER_FLAG_KEYFRAME;
+    tx_body.buffer_header.pts        = MMAL_TIME_UNKNOWN;
+    tx_body.buffer_header.dts        = MMAL_TIME_UNKNOWN;
+
+    uint8_t tx_msg[sizeof(tx_hdr) + sizeof(tx_body)];
+    memcpy(tx_msg, &tx_hdr, sizeof(tx_hdr));
+    memcpy(tx_msg + sizeof(tx_hdr), &tx_body, sizeof(tx_body));
+    if(vchi_msg_queue(m_ServiceHandle, tx_msg, sizeof(tx_msg), VCHI_FLAGS_BLOCK_UNTIL_QUEUED, nullptr))
+        {
+        MMALstoreLog ( "\nInput Port Queue Failed", (u32)m_InputPortHandle);  
+        return false;
+        }
+    return true;
+//  return vchi_msg_queue(m_ServiceHandle, tx_msg, sizeof(tx_msg), VCHI_FLAGS_NONE, nullptr) == 0;
+}
+/*
 bool            CH264Decoder::MMALqueueInputFrame      (   u32 frame_offset, u32 frame_length)  // mmal_msg_buffer_from_host
 {
             // 1. MMAL header
@@ -1031,6 +1107,7 @@ bool            CH264Decoder::MMALqueueInputFrame      (   u32 frame_offset, u32
                     MMALstoreLog ( "\nInput Frame Queue Success");                         
                 return true;
 }
+*/
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              END OF FILE
 //----------------------------------------------------------------------------------------------------------------------------------------------------

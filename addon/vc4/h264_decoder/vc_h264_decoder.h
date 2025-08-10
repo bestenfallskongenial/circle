@@ -85,7 +85,7 @@ static  void    MMALcallBack                                (   void *callback_p
 //----------------------------------------------------------------------------------------------------------------------------------------------------        
         bool    MMALbufferReady                             (   ); 
         bool    MMALqueueOutputBuffer                       (   u32 vc_handle, u32 alloc_size);                                                      // MMALsendAndWait mmal_msg_buffer_from_host
-        bool    MMALqueueInputFrame                         (   u32 frame_offset, u32 frame_length);                    // MMALsendAndWait mmal_msg_buffer_from_host
+        bool    MMALqueueInputBuffer                        (   u32 frame_offset, u32 frame_length);                    // MMALsendAndWait mmal_msg_buffer_from_host
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 //              MEMBER VARIABLES
 //----------------------------------------------------------------------------------------------------------------------------------------------------
