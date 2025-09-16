@@ -1,0 +1,23 @@
+Okay, i tried to create a wire protocol h264 decoder for my oculus  mendax module,
+but its really a bare bone single format decoder for
+
+- raw 264 files
+- fixed resolution ( 640 to 480 )
+- baseline format and level 3.1
+
+it also attempt to create egl picture / gl es 2.0 zero copy textures in an alternating output buffer
+
+we have somehow managed to create and enable a "ril.video_decode" component with zero copy and 1 input buffer a 80 mb and two output buffers a 1 mb,
+the vpu at least display this on getportinfo.
+
+but since we have no documentation at all and some padding issues and still no answer whatsoever on the buffer from host messages:
+a) in nature since the reply is async 
+b) because the vpu drops the answer for some unknown reason completely 
+
+we need to debug the code as best as possibe so i decided a) to take apart the code in different files ( readebility )
+b) add a direct log for every message
+c) will need to overwork the actual methode i create send the buffer from host to the vpu by
+1) add a log for the actual tx and tx length
+2) add a field specific log for the dedicated messages
+3) add a padding and alingnment save compiler commands
+

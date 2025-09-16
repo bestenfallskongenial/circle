@@ -168,7 +168,7 @@ union mmal_es_specific_format
 	struct mmal_subpicture_format subpicture;
 };
 
-
+/*
 struct mmal_es_format_local 	// Definition of an elementary stream format (MMAL_ES_FORMAT_T) //
 {
 	u32 type;	// enum mmal_es_type //
@@ -180,7 +180,7 @@ struct mmal_es_format_local 	// Definition of an elementary stream format (MMAL_
 	u32 extradata_size;	// Size of the codec specific data //
 	u8  *extradata;		// Codec specific data //
 };
-
+*/
 
 struct mmal_es_format 	// Remote definition of an elementary stream format (MMAL_ES_FORMAT_T) //
 {

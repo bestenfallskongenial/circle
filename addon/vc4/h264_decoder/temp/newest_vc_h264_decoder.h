@@ -85,7 +85,7 @@ static  void    MMALcallBack                                (   void *callback_p
         u32     NextTransId                                 (   u32 &tid);
         bool    GetVCHIstate                                (   );
         bool    MMALinitEvents                              (   );
-
+     // void    MMALstoreLog                                (   const char* label, u32 value);
         void    MMALstoreLog                                (   const char* label,
                                                                 u32  value1 = STOREDEBUG_WHITESPACE,
                                                                 u32  value2 = STOREDEBUG_WHITESPACE,

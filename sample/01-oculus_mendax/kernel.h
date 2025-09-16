@@ -453,6 +453,7 @@ private:
 
 	bool m_USBhasLoadOnes;
 	bool m_resetFlag;
+	bool m_runtimelog = false;
 };
 
 #endif

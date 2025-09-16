@@ -43,19 +43,19 @@ bool            CVCSharedMemory::VCSMInitialize     (   )
                 if(!VCSMinitEvents())
                     {
             #ifdef VCSMLOG
-                    VCSMstoreLog ( "\nVCOS Init FAILED!", 0);      
+                    VCSMstoreLog ( "\nVCOS Init FAILED!");      
             #endif // VCSMLOG
                     return false;
                     }
                 if(!VCSMopenService())
                     {
             #ifdef VCSMLOG            
-                    VCSMstoreLog ( "VCHI Init FAILED!", 0);      
+                    VCSMstoreLog ( "VCHI Init FAILED!");      
             #endif // VCSMLOG                    
                     return false;
                     }
             #ifdef VCSMLOG  
-                VCSMstoreLog ( "\nVCSM Successful Initialized", 0);      
+                VCSMstoreLog ( "\nVCSM Successful Initialized");      
             #endif // VCSMLOG
                 return true;
 }
@@ -280,34 +280,65 @@ u32             CVCSharedMemory::VCSMconvertAddress (   void* buffer, size_t siz
 
                 return vcsm_addr;
 }
-
-void CVCSharedMemory::VCSMstoreLog(const char* label, u32 value)
+void            CVCSharedMemory::MMALstoreLog              (   const char* label, u32 value1, u32 value2, u32 value3, u32 value4 )
 {
-    // copy label
-    for (const char* p = label; *p; ++p) 
-        {
-        m_DebugCharArray[m_CharIndex] = *p;
-        m_CharIndex++;
-        }
-    // Write " 0x" prefix
-    m_DebugCharArray[m_CharIndex] = ' ';
-    m_CharIndex++;
-    m_DebugCharArray[m_CharIndex] = '0';
-    m_CharIndex++;
-    m_DebugCharArray[m_CharIndex] = 'x';
-    m_CharIndex++;
+                /* always write the label */
+                for (const char* p = label; *p; ++p)
+                    m_DebugCharArray[m_CharIndex++] = *p;
 
-    // Write value in hexadecimal (big-endian, no leading zero suppression)
-    for (int i = (sizeof(u32) * 2) - 1; i >= 0; --i) 
-        {
-        char hex = "0123456789ABCDEF"[(value >> (i * 4)) & 0xF];
-        m_DebugCharArray[m_CharIndex] = hex;
-        m_CharIndex++;
-        }
-    // newline + terminator
-    m_DebugCharArray[m_CharIndex] = '\n';
-    m_CharIndex++;    
-    m_DebugCharArray[m_CharIndex] = '\0';
+                /* if all values are placeholders, finish */
+                if ( value1 == STOREDEBUG_WHITESPACE &&
+                    value2 == STOREDEBUG_WHITESPACE &&
+                    value3 == STOREDEBUG_WHITESPACE &&
+                    value4 == STOREDEBUG_WHITESPACE )
+                {
+                    m_DebugCharArray[m_CharIndex++] = '\n';
+                    m_DebugCharArray[m_CharIndex]   = '\0';
+                    return;
+                }
+                /* write first value if valid */
+                if (value1 != STOREDEBUG_WHITESPACE) {
+                    m_DebugCharArray[m_CharIndex++] = ' ';
+                    m_DebugCharArray[m_CharIndex++] = '0';
+                    m_DebugCharArray[m_CharIndex++] = 'x';
+                    for (int i = (sizeof(u32) * 2) - 1; i >= 0; --i) {
+                        char hex = "0123456789ABCDEF"[(value1 >> (i * 4)) & 0xF];
+                        m_DebugCharArray[m_CharIndex++] = hex;
+                    }
+                }
+                /* write second value if valid */
+                if (value2 != STOREDEBUG_WHITESPACE) {
+                    m_DebugCharArray[m_CharIndex++] = ' ';
+                    m_DebugCharArray[m_CharIndex++] = '0';
+                    m_DebugCharArray[m_CharIndex++] = 'x';
+                    for (int i = (sizeof(u32) * 2) - 1; i >= 0; --i) {
+                        char hex = "0123456789ABCDEF"[(value2 >> (i * 4)) & 0xF];
+                        m_DebugCharArray[m_CharIndex++] = hex;
+                    }
+                }
+                /* write third value if valid */
+                if (value3 != STOREDEBUG_WHITESPACE) {
+                    m_DebugCharArray[m_CharIndex++] = ' ';
+                    m_DebugCharArray[m_CharIndex++] = '0';
+                    m_DebugCharArray[m_CharIndex++] = 'x';
+                    for (int i = (sizeof(u32) * 2) - 1; i >= 0; --i) {
+                        char hex = "0123456789ABCDEF"[(value3 >> (i * 4)) & 0xF];
+                        m_DebugCharArray[m_CharIndex++] = hex;
+                    }
+                }
+                /* write fourth value if valid */
+                if (value4 != STOREDEBUG_WHITESPACE) {
+                    m_DebugCharArray[m_CharIndex++] = ' ';
+                    m_DebugCharArray[m_CharIndex++] = '0';
+                    m_DebugCharArray[m_CharIndex++] = 'x';
+                    for (int i = (sizeof(u32) * 2) - 1; i >= 0; --i) {
+                        char hex = "0123456789ABCDEF"[(value4 >> (i * 4)) & 0xF];
+                        m_DebugCharArray[m_CharIndex++] = hex;
+                    }
+                }
+                /* terminate line */
+                m_DebugCharArray[m_CharIndex++] = '\n';
+                m_DebugCharArray[m_CharIndex]   = '\0';
 }
 
 void CVCSharedMemory::VCSMstoreMsg(const void* tx_msg, u32 total_size, const char* label)
@@ -357,6 +388,7 @@ bool            CVCSharedMemory::VCSMSendAndWait    (   const void *msg,
                                                         size_t *actual_reply_len )
 {
             #ifdef VCSMLOG    
+                MMALstoreLog("\nTX MSG", (u32)msg_size);
                 VCSMstoreMsg(msg, msg_size, "Raw TX");
             #endif // VCSMLOG
                 if (vchi_msg_queue(m_ServiceHandle, msg, msg_size, VCHI_FLAGS_BLOCK_UNTIL_QUEUED, NULL) != 0)
@@ -367,7 +399,8 @@ bool            CVCSharedMemory::VCSMSendAndWait    (   const void *msg,
                 do {
                     if (vchi_msg_dequeue(m_ServiceHandle, rx_msg, max_reply_len, &ReplyLength, VCHI_FLAGS_NONE) == 0)
                         {
-            #ifdef VCSMLOG                        
+            #ifdef VCSMLOG
+                        MMALstoreLog("\nRX MSG", ReplyLength);                        
                         VCSMstoreMsg(rx_msg, ReplyLength, "Raw RX");
             #endif // VCSMLOG                        
                         break;

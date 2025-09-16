@@ -106,18 +106,26 @@ boolean         CKernel::Initialize (void)
                             m_SharedMemory.VCSMimportMemory (m_frameBlockBaseB, m_frameBlockSizeB, 2);
                             m_SharedMemory.VCSMLockMemory   (2);
                          } 
-/*                                                            
-                if (bOK) { m_H264Decoder.MMALinitialize           (     m_VCSMinputHandle,         // my input buffer handle from smem
-                                                                        m_videoBlockSize,           // my allocated input buffer size 
-                                                                        m_VCSMoutputHandleA,       // my output buffer handle a from smem 
-                                                                        m_VCSMoutputHandleB,       // my output buffer handle b from smem
-                                                                        m_frameBlockSizeA,          // my allocated output buffer size
-                                                                        640,            // 
-                                                                        480, 
-                                                                        state.display,      // <-- add this
-                                                                        state.context);       // <-- and this)
-                }
-*/      
+                if (bOK) {  m_H264Parser.ParseInitialize(   m_videoBlockBase,
+                                                            8,                      // 
+                                                            TEX_SIZE, 
+                                                            8, 
+                                                            MAX_FRAMES, 
+                                                            VIDEO_WIDTH, 
+                                                            VIDEO_HEIGHT, 
+                                                            BASELINE_PROFILE, 
+                                                            41 );
+                         }
+                if (bOK) { m_H264Decoder.MMALinitialize (   m_SharedMemory.m_vc_handle[0],
+                                                            m_videoBlockSize,
+                                                            m_SharedMemory.m_vc_handle[1],
+                                                            m_SharedMemory.m_vc_handle[2],
+                                                            m_frameBlockSizeA,
+                                                            VIDEO_WIDTH,
+                                                            VIDEO_HEIGHT, 
+                                                            state.display,      // <-- add this
+                                                            state.context);     // <-- and this
+                         }                                  
                 if (bOK) { m_Watchdog.Start(TIMEOUT); }
 	            if (bOK) { m_SPIMaster.Initialize (); }
                 if (bOK) { m_ChipSelectPin.Write(LOW); }
@@ -133,16 +141,6 @@ TShutdownMode   CKernel::Run(void)
 {
             m_Timer.MsDelay(500);
 /*
-            m_H264Decoder.MMALinitialize           (                                m_VCSMinputHandle,         // my input buffer handle from smem
-                                                                        m_videoBlockSize,           // my allocated input buffer size 
-                                                                        m_VCSMoutputHandleA,       // my output buffer handle a from smem 
-                                                                        m_VCSMoutputHandleB,       // my output buffer handle b from smem
-                                                                        m_frameBlockSizeA,          // my allocated output buffer size
-                                                                        VIDEO_WIDTH,            // 
-                                                                        VIDEO_HEIGHT, 
-                                                                        state.display,      // <-- add this
-                                                                        state.context);       // <-- and this)
-*/
 m_H264Decoder.MMALinitialize (  m_SharedMemory.m_vc_handle[0],
                                 m_videoBlockSize,
                                 m_SharedMemory.m_vc_handle[1],
@@ -152,7 +150,7 @@ m_H264Decoder.MMALinitialize (  m_SharedMemory.m_vc_handle[0],
                                 VIDEO_HEIGHT, 
                                 state.display,      // <-- add this
                                 state.context);     // <-- and this
-
+*/
 //              CString test;
 //              CString test1;
 
@@ -165,7 +163,7 @@ m_H264Decoder.MMALinitialize (  m_SharedMemory.m_vc_handle[0],
                     {
                     return ShutdownReboot;      // If the update was successful, proceed with reboot
                     }
-
+/*
             m_H264Parser.ParseInitialize(   m_videoBlockBase,
                                             8,                      // 
                                             TEX_SIZE, 
@@ -175,10 +173,7 @@ m_H264Decoder.MMALinitialize (  m_SharedMemory.m_vc_handle[0],
                                             VIDEO_HEIGHT, 
                                             BASELINE_PROFILE, 
                                             41 );            
-
-                m_H264Decoder.MMALcreateTextures(); // Initialize m_TextureA (and B internally)
-
-
+*/
                 m_Timer.MsDelay(500);
 
                 if( filesystem_mount("emmc1-1", 
@@ -187,6 +182,9 @@ m_H264Decoder.MMALinitialize (  m_SharedMemory.m_vc_handle[0],
                     SCANED_FILES_TEX,  TEX_LOADED_BYTES, TEX_SD,
                     SCANED_FILES_VID,  VID_LOADED_BYTES, VID_SD))
                     {                   
+                    // Flush CPU->RAM so the VPU sees the loaded bitstream
+                    CleanAndInvalidateDataCacheRange((uintptr_t)m_videoBlockBase, (size_t)m_videoBlockSize);
+
                     gfx_init_v_buffer(&state);
 
                     parser_bmp(TEX_LOADED_OLD,TEX_LOADED_NEW);
@@ -210,8 +208,11 @@ m_H264Decoder.MMALinitialize (  m_SharedMemory.m_vc_handle[0],
                     m_Timer.MsDelay(500);
                     CString bufferVCSM = m_SharedMemory.m_DebugCharArray;
                     CString bufferMMAL = m_H264Decoder.m_DebugCharArray;
+
                     filesystem_save_log_file( "emmc1-1", FILENAME_VCSM_LOG, bufferVCSM);
                     filesystem_save_log_file( "emmc1-1", FILENAME_MMAL_LOG, bufferMMAL);
+
+            m_H264Decoder.m_CharIndex = 0; // retest the logger for the decoder
 
                 while (m_resetFlag == false)                                                  // mainloop
                     {
@@ -229,6 +230,9 @@ m_H264Decoder.MMALinitialize (  m_SharedMemory.m_vc_handle[0],
                             SCANED_FILES_TEX, TEX_LOADED_BYTES, TEX_USB, 
                             SCANED_FILES_VID, VID_LOADED_BYTES, VID_USB))
                             {
+                            // Flush CPU->RAM so the VPU sees the loaded bitstream
+                            CleanAndInvalidateDataCacheRange((uintptr_t)m_videoBlockBase, (size_t)m_videoBlockSize);
+
                             parser_bmp(TEX_LOADED_OLD,TEX_LOADED_NEW);
                             parser_h264(VID_LOADED_OLD,VID_LOADED_NEW);
 
@@ -244,6 +248,14 @@ m_H264Decoder.MMALinitialize (  m_SharedMemory.m_vc_handle[0],
                             }
                         }
 
+                    m_H264Decoder.MMALFramePoller( m_H264Parser.m_frameOffset[0][100],m_H264Parser.m_framelenght[0][100]);
+
+if (m_H264Decoder.m_CharIndex >= 16384 && m_runtimelog == false )
+                    {
+                        CString bufferMMAL = m_H264Decoder.m_DebugCharArray;
+                        filesystem_save_log_file( "emmc1-1", "MMAL_RUN.TXT", bufferMMAL);
+                        m_runtimelog = true;
+                    }
                     gfx_render_shader_a(&state);
 
                     gl_current_prg = util_choose_program();
